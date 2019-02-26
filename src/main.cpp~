@@ -1,0 +1,247 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <time.h>
+#include "Algorithm.h"
+#include "vibe-background-sequential.hpp"
+#include "windows.h"
+#include <algorithm>  
+#include <vector>
+//#include "Algorithm.h"
+#include "fdssttracker.hpp"
+
+using namespace cv;
+using namespace std;
+
+//std::vector <cv::Mat> imgVec;
+extern int trackingFrame;
+extern mTarget trackingTarget;
+//VIBE����
+vibeModel_Sequential_t *g_VibeModel = NULL;
+unsigned int g_VibeFrameNumber = 1;
+Mat g_preFrameImage;
+Point g_pt;
+bool ClickFlag = false;
+int VibeImgScale = 1;                                                   //VIBEʹ�õ�ͼ��ߴ���ԭͼ��������СScale����DSST�ĳߴ籣�ֲ���
+
+
+
+
+
+
+
+Mat Vibe_Detect(cv::Mat img_gray)
+{
+
+	cv::Mat detectOutput;
+	if (g_VibeFrameNumber == 1) {
+		g_preFrameImage = cv::Mat(img_gray.rows, img_gray.cols, CV_8UC1);		           //vibe��һ֡�����ڴ�ռ�
+		g_VibeModel = (vibeModel_Sequential_t*)libvibeModel_Sequential_New();
+		libvibeModel_Sequential_AllocInit_8u_C1R(g_VibeModel, img_gray.data, img_gray.cols, img_gray.rows);
+		img_gray.copyTo(g_preFrameImage);
+	}
+	clock_t start, end;
+	start = clock();
+
+	detectOutput = MyDetect(img_gray, g_preFrameImage, g_VibeModel, g_VibeFrameNumber);
+
+	end = clock();
+	printf("MyDetect_time=%f\n", (double)(end - start) / CLOCKS_PER_SEC);
+
+	
+	++g_VibeFrameNumber;
+	img_gray.copyTo(g_preFrameImage);
+
+	return detectOutput;
+
+}
+
+
+
+
+int runfdsst(FDSSTTracker *tracker,mTarget sentTracking, Mat img_stalbe){
+	cv::Rect showRect;
+	cv::Mat show_img;
+	show_img = img_stalbe;
+
+		if (show_img.empty())
+		{
+			std::cout << "img_empty " << "\n";
+		}
+		
+		//第一帧图像，使用traker->init进行初始化
+		if (trackingFrame == 1)
+		{
+			float initX, initY, initWidth, initHegiht;
+			initX = sentTracking.x;
+			initY = sentTracking.y;
+			initWidth = sentTracking.width;
+			initHegiht = sentTracking.height;
+
+			cv::Rect_<float> initRect = cv::Rect(initX, initY, initWidth, initHegiht);
+
+			double duration = 0;
+			/*cv::Rect_<float> _roi = initRect;
+			cv::Point2f center_point = cv::Point2f(_roi.x + _roi.width / 2.0, _roi.y + _roi.height / 2.0);
+			cv::Size target_size = cv::Size(_roi.width, _roi.height);*/
+			//float confidence;
+			cv::Mat img;
+			//cv::cvtColor(show_img, img, cv::COLOR_RGB2GRAY);
+			img = show_img;
+
+			tracker->init(initRect, img);
+			showRect = initRect;
+		}
+		else{
+
+			cv::Mat img;
+			//imwrite("G:\\hikvision\\YH_0713\\Vibe_MultiFrame_MOSSE@20180406 -YH_Sim\\DSST\\img\\car\\show_img.jpg", show_img);
+			//cv::cvtColor(show_img, img, cv::COLOR_RGB2GRAY);
+			img = show_img;
+			//imwrite("G:\\hikvision\\YH_0713\\Vibe_MultiFrame_MOSSE@20180406 -YH_Sim\\DSST\\img\\car\\img.jpg", img);
+
+			showRect = tracker->update(img);
+			//showRect = initRect;
+		}
+
+
+		cv::rectangle(show_img, showRect, cv::Scalar(0, 255, 0));
+		cv::imshow("windows", show_img);
+		cv::waitKey(1);
+		trackingFrame++;
+
+
+	//}
+	//std::cout << "FPS: " << trackingFrame / time_sum << "\n";
+
+	//system("pause");
+	return 0;
+
+}
+
+
+
+
+void VIBE_Multi_ASSO_MOSSE()
+{
+	using namespace cv;
+	int nStatus = 0;
+	int frame;
+
+	char file_path[200];
+	CvRect draw;
+	int  imgs_num = 1158*7;
+
+
+	/**************����**************/
+
+	bool HOG = true;
+	bool FIXEDWINDOW = false;
+	bool MULTISCALE = true;
+	bool SILENT = true;
+	bool LAB = false;
+	// Create KCFTracker object
+	FDSSTTracker tracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
+
+	/**************����**************/
+	cv::Mat img_rgb;
+	VideoCapture cap("F:\\video2photo\\video2photo\\j3\\1.MOV");
+	long framess = cap.get(CV_CAP_PROP_FRAME_COUNT);
+	printf("%d", framess);
+	for (frame = 1; frame < imgs_num; frame += 1)
+	{
+
+		//sprintf_s(file_path, "D:\\project\\YH_0714\\Vibe_MultiFrame_MOSSE@20180406 -YH_Sim\\DSST\\img\\car\\imgs\\car %04d.jpg", frame);
+		//cv::Mat img_rgb = imread(file_path, CV_LOAD_IMAGE_UNCHANGED);
+		cap >> img_rgb;
+		if (img_rgb.empty())
+		{
+			std::cout << file_path << "����ʧ��" << std::endl;
+		}
+		else
+		{
+			Mat img_gray, img_detect, img_resize, img_stalbe;
+			cvtColor(img_rgb, img_gray, COLOR_RGB2GRAY, 0);
+			
+			//resize(img_gray, img_resize, Size(720, 576));
+			resize(img_gray, img_stalbe, Size(1280,720));
+
+			
+			g_pt = Point(0, 0);
+			setMouseCallback("detect", on_MouseTrack, (void*)&img_detect);
+			clock_t start, end;
+			start = clock();
+
+		//img_stable此时是灰度图
+			img_detect = Vibe_Detect(img_stalbe);
+
+			end = clock();
+			printf("detect_time=%f\n", (double)(end - start) / CLOCKS_PER_SEC);
+
+			Mat out_rgb;
+			cvtColor(img_detect, out_rgb, COLOR_GRAY2BGR);
+
+			//ͨ���������ø���Ŀ��
+
+			//clock_t start, end;
+			if (ClickFlag){
+				clock_t start, end;
+
+				start = clock();
+				//CvRect draw = Track_ASSO_MOSSE(img_stalbe);
+				runfdsst(&tracker,trackingTarget, img_stalbe);
+				end = clock();
+				printf("Track_time=%f\n", (double)(end - start) / CLOCKS_PER_SEC);
+			}
+
+			namedWindow("detect", CV_WINDOW_NORMAL);
+			imshow("detect", out_rgb);
+			waitKey(80);
+			
+		}
+
+	}
+
+}
+
+
+
+void Get_Current_Directory()
+{
+	//��̬����  
+	static char rootPath[MAX_PATH]; //��Ŀ¼  
+	static char exePath[MAX_PATH];  //ִ���ļ�Ŀ¼  
+
+
+
+	//��ȡ��ǰ��Ŀ��Ŀ¼  	
+	GetCurrentDirectory(MAX_PATH, (LPWSTR)rootPath);
+	cout << "rootPath=" << " ";
+	for (int i = 0; i < MAX_PATH; i++)
+		cout << rootPath[i];
+	cout << endl;
+
+
+	//��ȡexe�ļ�Ŀ¼  
+	GetModuleFileName(NULL, (LPWSTR)exePath, MAX_PATH);
+	cout << "exePath=" << " ";
+	for (int i = 0; i < MAX_PATH; i++)
+		cout << exePath[i];
+	cout << endl;
+
+}
+
+
+
+
+
+void main()
+{
+	VIBE_Multi_ASSO_MOSSE();
+	system("pause");
+}

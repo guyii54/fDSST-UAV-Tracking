@@ -1,0 +1,2 @@
+/usr/bin/ar cr libtracker.a  CMakeFiles/tracker.dir/src/kcftracker.cpp.o CMakeFiles/tracker.dir/src/fhog.cpp.o
+/usr/bin/ranlib libtracker.a

@@ -1,0 +1,2 @@
+/home/ubutnu/codes/fDSST_gra/qt-build/main/CMakeFiles/fDSST_gra.dir
+/home/ubutnu/codes/fDSST_gra/qt-build/CMakeFiles/tracker.dir
