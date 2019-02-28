@@ -4,8 +4,28 @@
 删除了一些函数和多分支（LAB，FIXEDWINDOW等）的赋值，更改了namespace为kcf，程序运行流畅，帧数约为13FPS（70ms）
 
 ## Parameters
-|参数名|含义|值|
-|:-:|:-:|:-:|
+|参数名|值|含义|
+|:-:|:-:|:-|
+|translation:|||  
+|detect_thresh_kcf|0.13|dont know meaning|  
+|template_size|96|template size in pixels, 0 to use ROI size,the value (template_size/cell_size) should be a power of 2 or a product of small prime numbers|
+|lambda|0.0001|regularization| 
+|padding|1.5|area surrounding the target, relative to its size|
+|out_put_sigma_factor|0.125|bandwidth of gaussian target|
+|if(hog)/else:||| 
+|interp_factor|0.012/0.075|linear interpolation factor for adaptation|
+|sigma|0.6/0.2|gaussian kernel bandwidth|  
+|cell_size|4/1|hog cell size|
+|scale:|
+|scale_step|1.05|scale step for multi-scale estimation, 1 to disable it, a in DSST article |
+|scale_weight|0.95|downweight detection scores of other   scales for added stability|
+|scale_padding|1.0|extra area surrounding the target for scaling|  
+|scale_sigma_factor|0.25|bandwidth of Gaussion|
+|n_scales|33|number of scales|
+|scale_lr|0.025|scale learning rate| 
+|scale_max_area|512|max ROI size before compressing|
+|scale_lambda|0.01|regularization|
+
 translation:  
 detect_thresh_kcf = 0.13;		//dont know meaning  
 template\_size = 96   			//template size in pixels, 0 to use ROI size,the value (template_size/cell_size) should be a power of 2 or a product of small prime numbers  
@@ -29,8 +49,21 @@ scale_lr = 0.025;				//scale learning rate
 scale_max_area = 512;			//max ROI size before compressing  
 scale_lambda = 0.01;			//regularization  
 
-
 ## Variables
+|变量名|解释|
+|:-:|:-|
+|_roi|input in init, output in update;  |
+|_alphaf|alphaf in paper, use this to calculate the detect result, changed in train();  |
+|_prob|Gaussian Peak(training outputs);  |
+|_tmpl|features of image (or the normalized gray image itself  when raw), changed in train();  |
+|_num|numerator: use to update as MOSSE  |
+|_den|denumerator: use to update as MOSSE  |
+|_size_patch|0:rows;1:cols;2:numFeatures; init in getFeatures();  |
+|base_width_dsst|roi.width|
+|scale_model_width|if base_width_dsst>max_area,scale_model_width=resized based_with_dsst|
+|scale:|  
+|scaleFactors|a^n in DSST article|
+
 _roi				//input in init, output in update;  
 _alphaf				//alpha in paper, use this to calculate the detect result, changed in train();  
 _prob	  			//Gaussian Peak(training outputs);  
@@ -39,7 +72,7 @@ _num	   			//numerator: use to update as MOSSE
 _den	   			//denumerator: use to update as MOSSE  
 _size_patch			//0:rows;1:cols;2:numFeatures; init in getFeatures();  
 base_width_dsst		//roi.width
-scale_model_width	//if base_width_dsst>max_area,scale_model_width=resized based_with_dsst
+scale_model_width	//if base_width_dsst > max_area,scale_model_width=resized based_with_dsst
 
 scale:  
 scaleFactors	//a^n in DSST article  
@@ -66,7 +99,7 @@ translation init:
 
 
 ### train();  
-#### train filter _alphaf  
+**train filter _alphaf**  
 step1 get_kxx  
 <p align="center">
     <img src="equation/get_kxx.png"> 
@@ -79,7 +112,8 @@ step3 update filter
 <p align="center">
     <img src="equation/update_filter.png"> 
 </p>
-#### update feature _tmpl(used in detect)  
+
+**update feature _tmpl(used in detect)**
 <p align="center">
     <img src="equation/update_tmpl.png"> 
 </p>
