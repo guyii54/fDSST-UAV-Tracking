@@ -33,12 +33,19 @@ train_dsst  ->  train_scale
 - KCF方式将滤波器看成一个整体进行更新，即更新_alphaf，OpenTracker项目中用的均是这种方法
 - MOSSE方式分为分子和分母进行更新，即更新_num, _den，DSST论文中用的是这种方式
 ### KCF的更新方法
-更新滤波器(_alpha)
+更新滤波器(_alpha)  
+step1 get_kxx
 <p align="center">
-    <img src="equation/get_kxx.gif", width="480">
+    <img src="equation/get_kxx.png", width="320"> 
 </p>
-$$\alpha = \frac{\hat{y}}{dft\_d(k^{xx})+\lambda}$$
-$$\alpha = (1 - train\_interp\_factor)  \alpha + (train\_interp\_factor)\alpha$$
+step2 get filter this frame
+<p align="center">
+    <img src="equation/get_filter.gif", width="320"> 
+</p>
+step3 update filter
+<p align="center">
+    <img src="equation/update_filter.gif", width="320"> 
+</p>
 更新模板
 
 
