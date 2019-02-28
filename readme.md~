@@ -31,16 +31,18 @@ scale_lambda = 0.01;			//regularization
 
 
 ## Variables
-_roi			//input in init, output in update;  
-_alphaf			//alpha in paper, use this to calculate the detect result, changed in train();  
-_prob	  		//Gaussian Peak(training outputs);  
-_tmpl	  		//features of image (or the normalized gray image itself  when raw), changed in train();  
-_num	   		//numerator: use to update as MOSSE  
-_den	   		//denumerator: use to update as MOSSE  
-_size_patch		//0:rows;1:cols;2:numFeatures; init in getFeatures();  
+_roi				//input in init, output in update;  
+_alphaf				//alpha in paper, use this to calculate the detect result, changed in train();  
+_prob	  			//Gaussian Peak(training outputs);  
+_tmpl	  			//features of image (or the normalized gray image itself  when raw), changed in train();  
+_num	   			//numerator: use to update as MOSSE  
+_den	   			//denumerator: use to update as MOSSE  
+_size_patch			//0:rows;1:cols;2:numFeatures; init in getFeatures();  
+base_width_dsst		//roi.width
+scale_model_width	//if base_width_dsst>max_area,scale_model_width=resized based_with_dsst
 
 scale:  
-scaleFactors	//a^n in DSST article
+scaleFactors	//a^n in DSST article  
 
 ## Functions
 init();  
@@ -54,34 +56,52 @@ scale init(init_scale+ tran_scale):
 1. init_scale():get scaleFactors  
 2. tran_scale():get samples using scaleFactors and use them to train the filter  
 
+
+
 update();  
 1. detect translation and scale using function detect() and detect_scale()
 2. update the filter of translation and scale using train() and train_scale()
 
+
+
+
 train();  
-1. train filter _alphaf
-	1. get_kxx  
+1. train filter _alphaf  
+step1 get_kxx  
 <p align="center">
     <img src="equation/get_kxx.png"> 
 </p>
-
-	2. get filter this frame  
+step2 get filter this frame  
 <p align="center">
     <img src="equation/get filter.png"> 
 </p>
-
-	3. update filter  
+step3 update filter  
 <p align="center">
     <img src="equation/update_filter.png"> 
 </p>
 
-2. update feature _tmpl  
+2. update feature _tmpl(used in detect)  
 <p align="center">
     <img src="equation/update_tmpl.png"> 
 </p>
 
 
+
 train_scale();  
+1. get the feature(also named samples)
+2. train the scale filter _den_dsst and _num_dsst
+step1 get filter this frame
+<p align="center">
+    <img src="equation/get A.png"> 
+</p>
+<p align="center">
+    <img src="equation/get B.png"> 
+</p>
+step2 update filter
+<p align="center">
+    <img src="equation/update A.png"> 
+</p>
+- input of train_scale() is the raw image, while input of train() is the feature.
 
 
 ## 核心函数
@@ -96,20 +116,6 @@ train_dsst  ->  train_scale
 训练分两种方式：MOSSE方式和KCF的方式，还没比较两种方法的速度，可能KCF更快，因为KCF是MOSSE后面提出的弄懂了KCF的原理提出的更新方法。
 - KCF方式将滤波器看成一个整体进行更新，即更新_alphaf，OpenTracker项目中用的均是这种方法
 - MOSSE方式分为分子和分母进行更新，即更新_num, _den，DSST论文中用的是这种方式
-### KCF的更新方法(funtion train())
-更新滤波器(_alpha)  
-step1 get_kxx
-<p align="center">
-    <img src="equation/get_kxx.png"> 
-</p>
-step2 get filter this frame
-<p align="center">
-    <img src="equation/get filter.png"> 
-</p>
-step3 update filter
-<p align="center">
-    <img src="equation/update_filter.png"> 
-</p>
-更新模板
+
 
 
