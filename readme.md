@@ -78,6 +78,8 @@ scale:
 scaleFactors	//a^n in DSST article  
 
 ## Functions
+---
+
 ### init();  
 translation init + scale init.  
 translation init:  
@@ -89,14 +91,13 @@ scale init(init_scale+ tran_scale):
 1. init_scale():get scaleFactors  
 2. tran_scale():get samples using scaleFactors and use them to train the filter  
 
-
+---
 
 ### update();  
 1. detect translation and scale using function detect() and detect_scale()
 2. update the filter of translation and scale using train() and train_scale()
 
-
-
+---
 
 ### train();  
 #### 1.train filter _alphaf  
@@ -113,12 +114,14 @@ step2 get filter this frame
     <img src="equation/update_filter.png"> 
 </p>
 
+---
+
 #### 2.update feature _tmpl(used in detect)  
 <p align="center">
     <img src="equation/update_tmpl.png"> 
 </p>
 
-
+---
 
 ### train_scale();  
 #### 1.get the feature(also named samples)  
@@ -136,6 +139,7 @@ step2 update filter
 </p>
 - input of train_scale() is the raw image, while input of train() is the feature.
 
+---
 
 ## 核心函数
 getFeature()  
