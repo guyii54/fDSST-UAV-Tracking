@@ -49,6 +49,7 @@ translation init:
 1. init _size_patch and get features  
 2. use feature create \hat{y}, also named _prob
 3. use KCF(17) to train filter _alphaf  
+
 scale init(init_scale+ tran_scale):  
 1. init_scale():get scaleFactors  
 2. tran_scale():get samples using scaleFactors and use them to train the filter  
@@ -59,19 +60,22 @@ update();
 
 train();  
 1. train filter _alphaf
-	1. get_kxx
+	1. get_kxx  
 <p align="center">
     <img src="equation/get_kxx.png"> 
 </p>
-	2. get filter this frame
+
+	2. get filter this frame  
 <p align="center">
     <img src="equation/get filter.png"> 
 </p>
-	3. update filter
+
+	3. update filter  
 <p align="center">
     <img src="equation/update_filter.png"> 
 </p>
-2. update feature _tmpl
+
+2. update feature _tmpl  
 <p align="center">
     <img src="equation/update_tmpl.png"> 
 </p>
