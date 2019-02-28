@@ -36,15 +36,15 @@ train_dsst  ->  train_scale
 更新滤波器(_alpha)  
 step1 get_kxx
 <p align="center">
-    <img src="equation/get_kxx.png", width="320"> 
+    <img src="equation/get_kxx.png", width="60%"> 
 </p>
 step2 get filter this frame
 <p align="center">
-    <img src="equation/get_filter.gif", width="320"> 
+    <img src="equation/get_filter.gif", width="60%"> 
 </p>
 step3 update filter
 <p align="center">
-    <img src="equation/update_filter.gif", width="320"> 
+    <img src="equation/update_filter.gif", width="60%"> 
 </p>
 更新模板
 
