@@ -159,14 +159,13 @@ protected:
 
 //=====dsst====
     // Initialization for scales
-    void init_dsst(const cv::Mat image, const cv::Rect2d& roi);
+    void init_scale(const cv::Mat image, const cv::Rect2d& roi);
 
-    bool update_dsst( const cv::Mat image, cv::Rect2d& roi);
     // Detect the new scaling rate
-    cv::Point2i detect_dsst(cv::Mat image);
+    cv::Point2i detect_scale(cv::Mat image);
 
     // Train method for scaling
-    void train_dsst(cv::Mat image, bool ini = false);
+    void train_scale(cv::Mat image, bool ini = false);
 
     // Compute the F^l in the paper
     cv::Mat get_sample_dsst(const cv::Mat & image);

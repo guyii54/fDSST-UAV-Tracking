@@ -28,16 +28,6 @@ string
 math.h
 -
 
-/home/ubutnu/codes/fDSST_gra/src/fhog.cpp
-fhog.hpp
-/home/ubutnu/codes/fDSST_gra/src/fhog.hpp
-tbb/tbb.h
--
-tbb/parallel_for.h
-/home/ubutnu/codes/fDSST_gra/src/tbb/parallel_for.h
-tbb/blocked_range.h
-/home/ubutnu/codes/fDSST_gra/src/tbb/blocked_range.h
-
 /home/ubutnu/codes/fDSST_gra/src/kcftracker.cpp
 kcftracker.hpp
 /home/ubutnu/codes/fDSST_gra/src/kcftracker.hpp

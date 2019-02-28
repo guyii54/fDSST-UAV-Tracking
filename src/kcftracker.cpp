@@ -148,8 +148,8 @@ void DSSTTracker::init(const cv::Mat image, const cv::Rect2d &roi)
     //_den = cv::Mat(size_patch[0], size_patch[1], CV_32FC2, float(0));
     train(_tmpl, 1.0); // train with initial frame
 
-    init_dsst(image, roi);
-    train_dsst(image, true);
+    init_scale(image, roi);
+    train_scale(image, true);
 }
 
 
@@ -193,7 +193,7 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
         _roi.height = 2;
 
     //*********************scale estimation**********************;
-    cv::Point2i scale_pi = detect_dsst(image);
+    cv::Point2i scale_pi = detect_scale(image);
 
     //printf("dsst thresh: %f, peak: %f\n", detect_thresh_dsst, _peak_value);
     if (_peak_value >= detect_thresh_dsst)
@@ -229,7 +229,7 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
         assert(_roi.width >= 0 && _roi.height >= 0);
         train(getFeatures(image, 0), interp_factor);
 
-        train_dsst(image);
+        train_scale(image);
 
         roi = _roi;
         return true;
@@ -592,9 +592,12 @@ float DSSTTracker::subPixelPeak(float left, float center, float right)
 
     return 0.5 * (right - left) / divisor;
 }
+
+
+
 //DSST=========================================================================================
 // Initialization for scales
-void DSSTTracker::init_dsst(const cv::Mat image, const cv::Rect2d &roi)
+void DSSTTracker::init_scale(const cv::Mat image, const cv::Rect2d &roi)
 {
     // The initial size for adjusting
     base_width_dsst = roi.width;
@@ -633,7 +636,7 @@ void DSSTTracker::init_dsst(const cv::Mat image, const cv::Rect2d &roi)
 }
 
 // Train method for scaling
-void DSSTTracker::train_dsst(cv::Mat image, bool ini)
+void DSSTTracker::train_scale(cv::Mat image, bool ini)
 {
     cv::Mat samples = get_sample_dsst(image);
 
@@ -667,7 +670,7 @@ void DSSTTracker::train_dsst(cv::Mat image, bool ini)
 }
 
 // Detect the new scaling rate
-cv::Point2i DSSTTracker::detect_dsst(cv::Mat image)
+cv::Point2i DSSTTracker::detect_scale(cv::Mat image)
 {
 
     cv::Mat samples = DSSTTracker::get_sample_dsst(image);
