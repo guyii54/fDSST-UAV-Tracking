@@ -251,7 +251,7 @@ cv::Point2f DSSTTracker::detect(cv::Mat z, cv::Mat x, float &peak_value) // KCF 
     //minMaxLoc only accepts doubles for the peak, and integer points for the coordinates
     cv::Point2i pi;
     double pv;
-    cv::minMaxLoc(res, NULL, &pv, NULL, &pi);
+    cv::minMaxLoc(res, NULL, &pv, NULL, &pi);   //&pv: max value, &pi: max location
     peak_value = (float)pv;
 
     //subpixel peak estimation, coordinates will be non-integer

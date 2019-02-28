@@ -70,12 +70,12 @@ _prob	  			//Gaussian Peak(training outputs);
 _tmpl	  			//features of image (or the normalized gray image itself  when raw), changed in train();  
 _num	   			//numerator: use to update as MOSSE  
 _den	   			//denumerator: use to update as MOSSE  
-_size_patch			//0:rows;1:cols;2:numFeatures; init in getFeatures();  
+_size_patch			//0:rows;1:cols;2:numFeatures; init in getFeatures();???用在creatGaussianPeak与GaussionCorrelation中
 base_width_dsst		//roi.width
 scale_model_width	//if base_width_dsst > max_area,scale_model_width=resized based_with_dsst
 
 scale:  
-scaleFactors	//a^n in DSST article  
+scaleFactors		//a^n in DSST article  
 
 ## Functions
 ---
@@ -83,13 +83,13 @@ scaleFactors	//a^n in DSST article
 ### init();  
 translation init + scale init.  
 translation init:  
-1. 初始化_size_patch，提取特征feature
-2. 用特征创建_prob
-3. 训练第一帧的位置滤波器
+1. **getFeature()**函数初始化_size_patch???，提取特征feature并初始化特征模板_tmpl
+2. 用_size_patch创建_prob
+3. 用_tmpl训练 **train()** 位置滤波器_alphaf
 
 scale init(init_scale+ tran_scale):  
 1. init_scale():初始化n_scale个尺度的值，储存在scaleFactors中
-2. tran_scale():用scalesFactors提样本（sample），并用它们训练尺度滤波器
+2. tran_scale():用scalesFactors提样本sample，并用它们训练尺度滤波器_num_dsst与_den_dsst
 
 ---
 
@@ -114,7 +114,7 @@ step2 get filter this frame
     <img src="equation/update_filter.png"> 
 </p>
 
-#### 2.训练模板 
+#### 2.训练模板_tmpl
 <p align="center">
     <img src="equation/update_tmpl.png"> 
 </p>
@@ -122,8 +122,8 @@ step2 get filter this frame
 ---
 
 ### train_scale();  
-#### 1.获得特征feature（也叫sample）
-#### 2.训练尺度滤波器的分子_den_dsst与分母_num_dsst
+#### 1.获得特征samples
+#### 2.用samples训练尺度滤波器的分子_den_dsst与分母_num_dsst
 step1 get filter this frame  
 <p align="center">
     <img src="equation/get A.png"> 
@@ -131,21 +131,36 @@ step1 get filter this frame
 <p align="center">
     <img src="equation/get B.png"> 
 </p>
-step2 update filter
+step2 update filter  
 <p align="center">
     <img src="equation/update A.png"> 
 </p>
-- input of train_scale() is the raw image, while input of train() is the feature.
+- train_scale()的输入是原图，而train()的输入是特征
 
 ---
 
-## 核心函数
-getFeature()  
-creatGaussianPeak()  
-init()
-tran()  
-init_dsst()	-> init_scale  
-train_dsst  ->  train_scale  
+### detect();
+#### 输入：
+z = _tmpl  			训练好的特征模板
+x = getFeature(img)	当前帧图像块的特征
+#### 输出：
+peak_value			峰值
+res 				预测的位置
+#### 1.得到相关分数
+相关分数：论文中的f(z)，代码中的res  
+step1 得到kxz  
+step2 复数点除complexDotDivision得到res  
+<p align="center">
+    <img src="equation/get res.png"> 
+</p>
+
+#### 2.得到分数最大位置pi、最终预测位置p
+step1 minMaxLoc()函数寻找pi  
+step2 subPixelPeak()  改变pi至p   \
+
+#### 
+
+---
 
 ## 训练
 训练分两种方式：MOSSE方式和KCF的方式，还没比较两种方法的速度，可能KCF更快，因为KCF是MOSSE后面提出的弄懂了KCF的原理提出的更新方法。
