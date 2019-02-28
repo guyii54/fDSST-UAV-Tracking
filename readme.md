@@ -114,8 +114,6 @@ step2 get filter this frame
     <img src="equation/update_filter.png"> 
 </p>
 
----
-
 #### 2.update feature _tmpl(used in detect)  
 <p align="center">
     <img src="equation/update_tmpl.png"> 
