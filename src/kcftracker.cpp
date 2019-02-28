@@ -192,7 +192,7 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
     if (_roi.height <= 0)
         _roi.height = 2;
 
-    //*********************scale estimation**********************;
+    //*********************scale estimation**********************
     cv::Point2i scale_pi = detect_scale(image);
 
     //printf("dsst thresh: %f, peak: %f\n", detect_thresh_dsst, _peak_value);
@@ -226,6 +226,8 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
         if (_roi.height <= 0)
             _roi.height = 2;
 
+
+        //********************update and train  the filter********************
         assert(_roi.width >= 0 && _roi.height >= 0);
         train(getFeatures(image, 0), interp_factor);
 
@@ -623,11 +625,13 @@ void DSSTTracker::init_scale(const cv::Mat image, const cv::Rect2d &roi)
     {
         scale_model_factor = std::sqrt(scale_max_area / (float)(base_width_dsst * base_height_dsst));
     }
-
     scale_model_width = (int)(base_width_dsst * scale_model_factor);
     scale_model_height = (int)(base_height_dsst * scale_model_factor);
     //printf("%d, %d \n", scale_model_width, scale_model_height);
+
+
     // Compute min and max scaling rate
+    //1.05^16 = 2.182   1.05^{-16}=0.458
     min_scale_factor = 0.01; //std::pow(scale_step,
                              //     std::ceil(std::log((std::fmax(5 / (float)base_width, 5 / (float)base_height) * (1 + scale_padding))) / 0.0086));
     max_scale_factor = 10;   //std::pow(scale_step,
