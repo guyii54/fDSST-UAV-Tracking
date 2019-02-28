@@ -85,7 +85,7 @@ translation init:
 2. use feature create \hat{y}, also named _prob
 3. use KCF(17) to train filter _alphaf  
 
-### scale init(init_scale+ tran_scale):  
+scale init(init_scale+ tran_scale):  
 1. init_scale():get scaleFactors  
 2. tran_scale():get samples using scaleFactors and use them to train the filter  
 
@@ -99,7 +99,7 @@ translation init:
 
 
 ### train();  
-**train filter _alphaf**  
+#### 1.train filter _alphaf  
 step1 get_kxx  
 <p align="center">
     <img src="equation/get_kxx.png"> 
@@ -108,12 +108,12 @@ step2 get filter this frame
 <p align="center">
     <img src="equation/get filter.png"> 
 </p>
-step3 update filter  
+    step3 update filter  
 <p align="center">
     <img src="equation/update_filter.png"> 
 </p>
 
-**update feature _tmpl(used in detect)**
+#### 2.update feature _tmpl(used in detect)  
 <p align="center">
     <img src="equation/update_tmpl.png"> 
 </p>
@@ -121,8 +121,8 @@ step3 update filter
 
 
 ### train_scale();  
-#### get the feature(also named samples)  
-#### train the scale filter _den_dsst and _num_dsst  
+#### 1.get the feature(also named samples)  
+#### 2.train the scale filter _den_dsst and _num_dsst  
 step1 get filter this frame  
 <p align="center">
     <img src="equation/get A.png"> 
