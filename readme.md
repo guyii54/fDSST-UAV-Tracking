@@ -40,7 +40,7 @@ step1 get_kxx
 </p>
 step2 get filter this frame
 <p align="center">
-    <img src="equation/get_filter.png", width="60%"> 
+    <img src="equation/get filter.png", width="60%"> 
 </p>
 step3 update filter
 <p align="center">

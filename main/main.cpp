@@ -24,7 +24,7 @@ int main()
     cv::Mat frame;
     cv::Mat frame_gray;
     cv::Rect2d roi;
-    VideoCapture cap("/home/ubutnu/Video/s_video/h3.MP4");
+    VideoCapture cap("/home/ubutnu/Video/s_video/h2d3.MP4");
     int frame_count;    //number of passed frame
 
  #ifdef test_fps
