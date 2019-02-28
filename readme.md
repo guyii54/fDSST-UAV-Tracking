@@ -83,24 +83,24 @@ scaleFactors	//a^n in DSST article
 ### init();  
 translation init + scale init.  
 translation init:  
-1. init _size_patch and get features  
-2. use feature create \hat{y}, also named _prob
-3. use KCF(17) to train filter _alphaf  
+1. 初始化_size_patch，提取特征feature
+2. 用特征创建_prob
+3. 训练第一帧的位置滤波器
 
 scale init(init_scale+ tran_scale):  
-1. init_scale():get scaleFactors  
-2. tran_scale():get samples using scaleFactors and use them to train the filter  
+1. init_scale():初始化n_scale个尺度的值，储存在scaleFactors中
+2. tran_scale():用scalesFactors提样本（sample），并用它们训练尺度滤波器
 
 ---
 
 ### update();  
-1. detect translation and scale using function detect() and detect_scale()
-2. update the filter of translation and scale using train() and train_scale()
+1. 用detect()和detect_scale()函数检测出位置与尺度
+2. 用train()和train_scale()函数更新位置滤波器和尺度滤波器
 
 ---
 
 ### train();  
-#### 1.train filter _alphaf  
+#### 1.训练滤波器_alphaf
 step1 get_kxx  
 <p align="center">
     <img src="equation/get_kxx.png"> 
@@ -114,7 +114,7 @@ step2 get filter this frame
     <img src="equation/update_filter.png"> 
 </p>
 
-#### 2.update feature _tmpl(used in detect)  
+#### 2.训练模板 
 <p align="center">
     <img src="equation/update_tmpl.png"> 
 </p>
@@ -122,8 +122,8 @@ step2 get filter this frame
 ---
 
 ### train_scale();  
-#### 1.get the feature(also named samples)  
-#### 2.train the scale filter _den_dsst and _num_dsst  
+#### 1.获得特征feature（也叫sample）
+#### 2.训练尺度滤波器的分子_den_dsst与分母_num_dsst
 step1 get filter this frame  
 <p align="center">
     <img src="equation/get A.png"> 
