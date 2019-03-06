@@ -153,12 +153,12 @@ step2 复数点除complexDotDivision得到res
 <p align="center">
     <img src="equation/get res.png"> 
 </p>
+step3 最大响应赋值给peak_value
 
 #### 2.得到分数最大位置pi、最终预测位置p
 step1 minMaxLoc()函数寻找pi  
-step2 subPixelPeak()  改变pi至p   \
+step2 subPixelPeak()  改变pi至p   
 
-#### 
 
 ---
 
@@ -166,6 +166,29 @@ step2 subPixelPeak()  改变pi至p   \
 训练分两种方式：MOSSE方式和KCF的方式，还没比较两种方法的速度，可能KCF更快，因为KCF是MOSSE后面提出的弄懂了KCF的原理提出的更新方法。
 - KCF方式将滤波器看成一个整体进行更新，即更新_alphaf，OpenTracker项目中用的均是这种方法
 - MOSSE方式分为分子和分母进行更新，即更新_num, _den，DSST论文中用的是这种方式
+
+## 亚像素极值点检测 subpixel peak detection
+代码中的subpixelpeak()函数  
+参考博客[https://www.cnblogs.com/shine-lee/p/9419388.html](https://www.cnblogs.com/shine-lee/p/9419388.html)  
+此处使用抛物线近似  
+<p align="center">
+    <img src="equation/subpixelpeak 1.png"> 
+</p>
+<p align="center">
+    <img src="equation/subpixelpeak 2.png"> 
+</p>
+<p align="center">
+    <img src="equation/subpixelpeak 3.png"> 
+</p>
+
+
+## 公式推导
+
+
+
+
+
+
 
 
 
