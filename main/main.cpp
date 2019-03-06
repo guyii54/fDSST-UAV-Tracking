@@ -10,7 +10,8 @@
 #include "kcftracker.hpp"
 #include <opencv2/core.hpp>
 
-#define test_fps
+#define TEST_FPS
+#define SAVE_VIDEO
 
 using namespace cv;
 using namespace std;
@@ -24,10 +25,14 @@ int main()
     cv::Mat frame;
     cv::Mat frame_gray;
     cv::Rect2d roi;
-    VideoCapture cap("/home/ubutnu/Video/s_video/h2d3.MP4");
+    VideoCapture cap("/home/ubutnu/Video/s_video/DJI_0144.MP4");
     int frame_count;    //number of passed frame
 
- #ifdef test_fps
+#ifdef SAVE_VIDEO
+    VideoWriter writer("../../processed/DJI_0144P.avi",CV_FOURCC('M','J','P','G'),30,Size(1280,720));
+#endif
+
+ #ifdef TEST_FPS
     double start_fps,end_fps,dur_fps;
 #endif
 
@@ -56,7 +61,7 @@ int main()
     tracker.init(frame,roi);
     for(frame_count = 1;;frame_count++)
     {
-#ifdef test_fps
+#ifdef TEST_FPS
         start_fps = clock();
 #endif
         cap>>frame;
@@ -67,7 +72,7 @@ int main()
             break;
         }
         tracker.update(frame,roi);
-#ifdef test_fps
+#ifdef TEST_FPS
         end_fps = clock();
         dur_fps =end_fps-start_fps;
         time_used = (double)(dur_fps)/CLOCKS_PER_SEC;
@@ -77,6 +82,9 @@ int main()
 #endif
         rectangle(frame,roi,Scalar(255,0,0),2);
         imshow("frame",frame);
+#ifdef SAVE_VIDEO
+        writer << frame;
+#endif
         if(waitKey(30)>0)
             break;
     }
