@@ -88,6 +88,10 @@ the use of this software, even if advised of the possibility of such damage.
 #include "labdata.hpp"
 #endif
 
+//#define TIMETEST
+
+using namespace std;
+
 namespace dsst
 {
 // Constructor
@@ -126,11 +130,11 @@ DSSTTracker::DSSTTracker(bool hog)
 
     //dsst===================
         scale_step = 1.05;
+        n_scales = 8;
 //        _dsst = true;
         _scale_dsst = 1;
         scale_padding = 1.0;
         scale_sigma_factor = 0.25;
-        n_scales = 33;
         scale_lr = 0.025;
         scale_max_area = 512;
         scale_lambda = 0.01;
@@ -139,6 +143,10 @@ DSSTTracker::DSSTTracker(bool hog)
 // Initialize tracker
 void DSSTTracker::init(const cv::Mat image, const cv::Rect2d &roi)
 {
+#ifdef TIMETEST
+    double st,et,dt;
+    st = clock();
+#endif
     _roi = roi;
     assert(roi.width >= 0 && roi.height >= 0);
     _tmpl = getFeatures(image, 1);
@@ -150,12 +158,24 @@ void DSSTTracker::init(const cv::Mat image, const cv::Rect2d &roi)
 
     init_scale(image, roi);
     train_scale(image, true);
+
+#ifdef TIMETEST
+    et = clock();
+    dt =1000* (double)(et-st)/CLOCKS_PER_SEC;
+    cout<<"init time:"<<dt<<endl;
+#endif
+
 }
 
 
 // Update position and scale based on the new frame
 bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
 {
+#ifdef TIMETEST
+    double st,et,dt;
+    st = clock();
+#endif
+
     if (_roi.x + _roi.width <= 0)
         _roi.x = -_roi.width + 1; //let _roi.x + _roi.width = 1
     if (_roi.y + _roi.height <= 0)
@@ -173,6 +193,11 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
     float cy = _roi.y + _roi.height / 2.0f;
 
     //********************translation estimation********************
+#ifdef TIMETEST
+    double s_tr,e_tr,d_tr;
+    s_tr = clock();
+#endif
+
     cv::Point2f res = detect(_tmpl, getFeatures(image, 0, 1.0f), _peak_value);
 
     // Adjust by cell size and _scale
@@ -191,10 +216,19 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
         _roi.width = 2;
     if (_roi.height <= 0)
         _roi.height = 2;
-
+#ifdef  TIMETEST
+    e_tr = clock();
+    d_tr = 1000*(double)(e_tr-s_tr)/CLOCKS_PER_SEC;
+    cout<<"tran es:"<<d_tr<<endl;
+#endif
     //*********************scale estimation**********************
-    cv::Point2i scale_pi = detect_scale(image);
+#ifdef TIMETEST
+    double s_sc,e_sc,d_sc;
+    s_sc = clock();
+#endif
 
+    cv::Point2i scale_pi = detect_scale(image);
+    cout<<"scale result:"<<scaleFactors[scale_pi.x]<<endl;
     //printf("dsst thresh: %f, peak: %f\n", detect_thresh_dsst, _peak_value);
     if (_peak_value >= detect_thresh_dsst)
     {
@@ -225,15 +259,34 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
             _roi.width = 2;
         if (_roi.height <= 0)
             _roi.height = 2;
-
-
+#ifdef TIMETEST
+        e_sc = clock();
+        d_sc = 1000*(double)(e_sc-s_sc)/CLOCKS_PER_SEC;
+        cout<<"scale es:"<<d_sc<<endl;
+#endif
         //********************update and train  the filter********************
+#ifdef TIMETEST
+        double s_fil,e_fil,d_fil;
+        s_fil = clock();
+#endif
+
         assert(_roi.width >= 0 && _roi.height >= 0);
         train(getFeatures(image, 0), interp_factor);
-
         train_scale(image);
 
+#ifdef TIMETEST
+        e_fil = clock();
+        d_fil = 1000*(double)(e_fil-s_fil)/CLOCKS_PER_SEC;
+        cout<<"filter train:"<<d_fil<<endl;
+#endif
         roi = _roi;
+
+#ifdef TIMETEST
+    et = clock();
+    dt =1000* (double)(et-st)/CLOCKS_PER_SEC;
+    cout<<"update time:"<<dt<<endl;
+#endif
+
         return true;
     }
     else
@@ -615,7 +668,7 @@ void DSSTTracker::init_scale(const cv::Mat image, const cv::Rect2d &roi)
     for (int i = 0; i < n_scales; i++)
     {
         scaleFactors[i] = std::pow(scale_step, ceilS - i - 1);
-        //    printf("scaleFactors %d: %f; ", i, scaleFactors[i]);
+            printf("scaleFactors %d: %f; ", i, scaleFactors[i]);
     }
     printf("\n");
 

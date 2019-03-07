@@ -10,8 +10,9 @@
 #include "kcftracker.hpp"
 #include <opencv2/core.hpp>
 
-#define TEST_FPS
+//#define TEST_FPS
 #define SAVE_VIDEO
+
 
 using namespace cv;
 using namespace std;
@@ -25,7 +26,7 @@ int main()
     cv::Mat frame;
     cv::Mat frame_gray;
     cv::Rect2d roi;
-    VideoCapture cap("/home/ubutnu/Video/s_video/DJI_0144.MP4");
+    VideoCapture cap("/home/ubutnu/Video/s_video/201903062.MP4");
     int frame_count;    //number of passed frame
 
 #ifdef SAVE_VIDEO
@@ -36,12 +37,10 @@ int main()
     double start_fps,end_fps,dur_fps;
 #endif
 
+
+
     //*****************declare tracker****************//
     bool hog=true;
-    bool fixed_window=false;
-    bool multiscale=true;
-    bool lab=false;
-    bool dsst =true;
     DSSTTracker tracker(hog);
 
     //****************initialize tracker*****************//
@@ -64,7 +63,9 @@ int main()
 #ifdef TEST_FPS
         start_fps = clock();
 #endif
+
         cap>>frame;
+
 //        cvtColor(frame,frame_gray,COLOR_RGB2GRAY,0);
         if(frame.empty() == true)
         {
@@ -72,6 +73,8 @@ int main()
             break;
         }
         tracker.update(frame,roi);
+
+
 #ifdef TEST_FPS
         end_fps = clock();
         dur_fps =end_fps-start_fps;
@@ -80,8 +83,12 @@ int main()
         time_used *= 1000;
         cout<<"fps/time used:"<<fps<<"/"<<time_used<<"ms"<<endl;
 #endif
+
+
         rectangle(frame,roi,Scalar(255,0,0),2);
         imshow("frame",frame);
+
+
 #ifdef SAVE_VIDEO
         writer << frame;
 #endif

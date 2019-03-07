@@ -40,7 +40,7 @@ cell\_size = 4/1; 				//hog cell size if(hog)->cell_size=4 else->cell_size=1
 
 
 scale:  
-scale_step = 1.05;				//scale step for multi-scale estimation, 1 to disable it, a in DSST article  
+scale_step = 1.05;				//scale step for multi-scale estimation, 1 to disable it, a in DSST article,a in equation a^nP * a^nR  
 scale_weight = 0.95;			//downweight detection scores of other   scales for added stability  
 scale_padding = 1.0				//extra area surrounding the target for scaling  
 scale_sigma_factor = 0.25		//bandwidth of Gaussion  
@@ -183,4 +183,71 @@ step2 subPixelPeak()  改变pi至p
 
 
 ## 公式推导
-为毕业设计成文方便，见公式推导.word
+为毕业设计成文方便，见公式推导.docx
+
+## 关于编码格式
+编码格式会影响opencv的解码速度，进而影响程序的整体运行速度  
+cap>>frame 这行代码运行时间长  
+经测试，H.264是较慢的编码格式，但MJEP的编码格式视频质量太差  
+想办法加速解码速度？
+
+
+## 测试结果
+---
+
+### PC各段时间测试
+测试视频 201903062.MP4	h.264编码,n_sacle = 33
+|主函数			|子函数					|时长(ms)	|
+|:-				|:-						|:-			|
+|总程序			|						|23			|
+|解码			|						|4			|
+|init			|						|3.404		|
+|update			|						|19.3		|
+|update			|tranlation estimation	|3			|
+|update			|scale estimation		|6.5		|
+|update			|filter train			|9.6		|
+
+---
+
+### n_scale的修改
+测试视频 201903062.MP4	h.264编码,n_sacle = 9
+|主函数			|子函数					|时长(ms)	|
+|:-				|:-						|:-			|
+|总程序			|						|12.679		|
+|解码			|						|4			|
+|init			|						|\			|
+|update			|						|8.533		|
+|update			|tranlation estimation	|3.337		|
+|update			|scale estimation		|1.46		|
+|update			|filter train			|4.64		|
+
+测试视频 201903062.MP4	h.264编码,n_sacle = 20
+|主函数			|子函数					|时长(ms)	|
+|:-				|:-						|:-			|
+|总程序			|						|15.2		|
+|解码			|						|4			|
+|init			|						|\			|
+|update			|						|11.54		|
+|update			|tranlation estimation	|2.68		|
+|update			|scale estimation		|5.7		|
+|update			|filter train			|6.7		|
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
