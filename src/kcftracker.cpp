@@ -89,6 +89,7 @@ the use of this software, even if advised of the possibility of such damage.
 #endif
 
 //#define TIMETEST
+#define SCALE_RESULT
 
 using namespace std;
 
@@ -125,12 +126,11 @@ DSSTTracker::DSSTTracker(bool hog)
 
      //multiscale=========
         template_size = 96; //100;
-        scale_step = 1.05;
         scale_weight = 0.95;
 
     //dsst===================
-        scale_step = 1.05;
-        n_scales = 8;
+        scale_step = 1.02;
+        n_scales = 15;
 //        _dsst = true;
         _scale_dsst = 1;
         scale_padding = 1.0;
@@ -228,7 +228,9 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
 #endif
 
     cv::Point2i scale_pi = detect_scale(image);
+#ifdef SCALE_RESULT
     cout<<"scale result:"<<scaleFactors[scale_pi.x]<<endl;
+#endif
     //printf("dsst thresh: %f, peak: %f\n", detect_thresh_dsst, _peak_value);
     if (_peak_value >= detect_thresh_dsst)
     {
@@ -732,9 +734,18 @@ cv::Point2i DSSTTracker::detect_scale(cv::Mat image)
 
     cv::Mat samples = DSSTTracker::get_sample_dsst(image);
 
+
+//    cout<<"sample size:"<<samples.rows<<"*"<<samples.cols<<endl;
+//    cout<<"num size:"<<_num_dsst.rows<<"*"<<_num_dsst.cols<<endl;
+
     // Compute AZ in the paper
     cv::Mat add_temp;
     cv::reduce(complexDotMultiplication(_num_dsst, samples), add_temp, 0, CV_REDUCE_SUM);
+
+
+//    cout<<"add_temp size:"<<add_temp.rows<<"*"<<add_temp.cols<<endl;
+//    cout<<"den size:"<<_den_dsst.rows<<"*"<<_den_dsst.cols<<endl;
+
 
     // compute the final y, DSST (6);
     cv::Mat scale_response;
@@ -764,11 +775,11 @@ cv::Mat DSSTTracker::get_sample_dsst(const cv::Mat &image)
         float patch_width = base_width_dsst * scaleFactors[i] * _scale_dsst;
         float patch_height = base_height_dsst * scaleFactors[i] * _scale_dsst;
 
-        float cx = _roi.x + _roi.width / 2.0f;
+        float cx = _roi.x + _roi.width / 2.0f;          //roi.x是起点
         float cy = _roi.y + _roi.height / 2.0f;
 
         // Get the subwindow
-        cv::Mat im_patch = extractImage(image, cx, cy, patch_width, patch_height);
+        cv::Mat im_patch = extractImage(image, cx, cy, patch_width, patch_height);      //从image中提取cx,cy为中心，patch_width,patch_height为大小的图像快
         cv::Mat im_patch_resized;
 
         //printf("cx:%f,cy:%f\n",cx,cy);
@@ -782,7 +793,8 @@ cv::Mat DSSTTracker::get_sample_dsst(const cv::Mat &image)
             // map[i]->map = (float *)malloc (sizeof(float));
         }
 
-        // Scaling the subwindow
+        // Scaling the subwindow    将im_patch按scale_model_width, scale_model_height的大小resize
+        //opencv中的resize函数参数：src, dst, dsize, fx, fy, flag，其中fx, fy是factor，已知放大倍数时使用，
         if (scale_model_width > im_patch.cols)
             resize(im_patch, im_patch_resized, cv::Size(scale_model_width, scale_model_height), 0, 0, 1);
         else
@@ -796,6 +808,7 @@ cv::Mat DSSTTracker::get_sample_dsst(const cv::Mat &image)
         normalizeAndTruncate(map[i], 0.2f);
         PCAFeatureMaps(map[i]);
 
+        //赋值给sample，具体未读
         if (i == 0)
         {
             //printf("numFeatures:%d, sizeX:%d,sizeY:%d\n", map[i]->numFeatures, map[i]->sizeX, map[i]->sizeY);

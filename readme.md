@@ -4,78 +4,49 @@
 删除了一些函数和多分支（LAB，FIXEDWINDOW等）的赋值，更改了namespace为kcf，程序运行流畅，帧数约为13FPS（70ms）
 
 ## Parameters
-|参数名|值|含义|
+|参数名						|值					|含义|
 |:-:|:-:|:-|
-|translation:|||  
-|detect_thresh_kcf|0.13|dont know meaning|  
-|template_size|96|template size in pixels, 0 to use ROI size,the value (template_size/cell_size) should be a power of 2 or a product of small prime numbers|
-|lambda|0.0001|regularization| 
-|padding|1.5|area surrounding the target, relative to its size|
-|out_put_sigma_factor|0.125|bandwidth of gaussian target|
-|if(hog)/else:||| 
-|interp_factor|0.012/0.075|linear interpolation factor for adaptation|
-|sigma|0.6/0.2|gaussian kernel bandwidth|  
-|cell_size|4/1|hog cell size|
-|scale:|
-|scale_step|1.05|scale step for multi-scale estimation, 1 to disable it, a in DSST article |
-|scale_weight|0.95|downweight detection scores of other   scales for added stability|
-|scale_padding|1.0|extra area surrounding the target for scaling|  
-|scale_sigma_factor|0.25|bandwidth of Gaussion|
-|n_scales|33|number of scales|
-|scale_lr|0.025|scale learning rate| 
-|scale_max_area|512|max ROI size before compressing|
-|scale_lambda|0.01|regularization|
+|translation:|				|					|  |
+|detect\_thresh_kcf			|0.13				|dont how to set|
+|template\_size				|96					|template size in pixels, 0 to use ROI size,the value (template_size/cell_size) should be a power of 2 or a product of small prime numbers|
+|lambda						|0.0001				|regularization| 
+|padding					|1.5				|area surrounding the target, relative to its size|
+|out_put_sigma_factor		|0.125				|bandwidth of gaussian target|
+|if(hog)/else:|				|					| 
+|interp_factor				|0.012/0.075		|linear interpolation factor for adaptation|
+|sigma						|0.6/0.2			|gaussian kernel bandwidth|  
+|cell_size					|4/1				|hog cell size|
+|							|					|
+|scale:						|					|
+|n_scales					|33					|number of scales|
+|scale_step					|1.05				|a in DSST article |
+|scale_weight				|0.95				|downweight detection scores of other   scales for added stability|
+|scale_padding				|1.0				|extra area surrounding the target for scaling|  
+|scale_sigma_factor			|0.25				|bandwidth of Gaussion|
+|scale_lr					|0.025				|scale learning rate| 
+|scale_max_area				|512				|max ROI size before compressing|
+|scale_lambda				|0.01				|regularization|
 
-translation:  
-detect_thresh_kcf = 0.13;		//dont know meaning  
-template\_size = 96   			//template size in pixels, 0 to use ROI size,the value (template_size/cell_size) should be a power of 2 or a product of small prime numbers  
-lambda = 0.0001;				//regularization  
-padding = 1.5;					//area surrounding the target, relative to its size  
-out_put_sigma_factor = 0.125;	//bandwidth of gaussian target  
-
-if(hog)/else  
-interp_factor= 0.012/0.075;		//linear interpolation factor for adaptation  
-sigma = 0.6/0,2;				//gaussian kernel bandwidth  
-cell\_size = 4/1; 				//hog cell size if(hog)->cell_size=4 else->cell_size=1  
-
-
-scale:  
-scale_step = 1.05;				//scale step for multi-scale estimation, 1 to disable it, a in DSST article,a in equation a^nP * a^nR  
-scale_weight = 0.95;			//downweight detection scores of other   scales for added stability  
-scale_padding = 1.0				//extra area surrounding the target for scaling  
-scale_sigma_factor = 0.25		//bandwidth of Gaussion  
-n_scales = 33;  				//number of scales
-scale_lr = 0.025;				//scale learning rate  
-scale_max_area = 512;			//max ROI size before compressing  
-scale_lambda = 0.01;			//regularization  
 
 ## Variables
-|变量名|解释|
-|:-:|:-|
-|_roi|input in init, output in update;  |
-|_alphaf|alphaf in paper, use this to calculate the detect result, changed in train();  |
-|_prob|Gaussian Peak(training outputs);  |
-|_tmpl|features of image (or the normalized gray image itself  when raw), changed in train();  |
-|_num|numerator: use to update as MOSSE  |
-|_den|denumerator: use to update as MOSSE  |
-|_size_patch|0:rows;1:cols;2:numFeatures; init in getFeatures();  |
-|base_width_dsst|roi.width|
-|scale_model_width|if base_width_dsst>max_area,scale_model_width=resized based_with_dsst|
-|scale:|  
-|scaleFactors|a^n in DSST article|
+|变量名					|解释|
+|:-|:-|
+|全局变量|				|		|
+|_roi					|input in init, output in update;  |
+|_alphaf				|位置滤波器|
+|_prob					|理想输出，在init中创建，从未改变，用来训练位置滤波器|
+|_tmpl					|先验知识模板,每一帧用它与本帧的特征做匹配，结束后用这一帧的特征更新模板|
+|_num					|numerator: use to update as MOSSE,size与samples的相同  |
+|_den					|denumerator: use to update as MOSSE，size为1*n_scale  |
+|_size_patch			|0:rows;1:cols;2:numFeatures; init in getFeatures();  |
+|scaleFactors			|a^n in DSST article|
+|_scale_dsst			|当前帧的尺度相对第一帧roi的参数，即当前预测的尺度绝对值就是_scale_dsst*base_width_dsst|
+|base_width_dsst		|第一帧图像给的roi的尺寸|
+|scale_model_width		|尺度预测中，所有尺度的图像块均要resize到这一尺寸后再进行hog特征的提取|
+|samples				|尺度预测提取的样本集，size为x*n_scale|
 
-_roi				//input in init, output in update;  
-_alphaf				//alpha in paper, use this to calculate the detect result, changed in train();  
-_prob	  			//Gaussian Peak(training outputs);  
-_tmpl	  			//features of image (or the normalized gray image itself  when raw), changed in train();  
-_num	   			//numerator: use to update as MOSSE  
-_den	   			//denumerator: use to update as MOSSE  
-_size_patch			//0:rows;1:cols;2:numFeatures; init in getFeatures();???用在creatGaussianPeak与GaussionCorrelation中
-base_width_dsst		//roi.width
-scale_model_width	//if base_width_dsst > max_area,scale_model_width=resized based_with_dsst
 
-scale:  
-scaleFactors		//a^n in DSST article  
+
 
 ## Functions
 ---
@@ -162,6 +133,27 @@ step2 subPixelPeak()  改变pi至p
 
 ---
 
+### get_sample_dsst
+获得多尺度尺度的特征
+#### 1.得到待提取图像块的尺寸
+```
+float patch_width = base_width_dsst * scaleFactors[i] * _scale_dsst;
+float patch_height = base_height_dsst * scaleFactors[i] * _scale_dsst;
+```
+#### 2.在原图中提取图像块
+```
+cv::Mat im_patch = extractImage(image, cx, cy, patch_width, patch_height); 
+```
+cx,cy均为本帧预测出的图像中心
+
+#### 3.对图像块进行resize
+统一resize到scale_model_width,scale_model_height的大小  
+scale_model_width,scale_model_height的来源：  
+init_scale()函数中初始化，即该变量一经初始化后是不再变化的，大小为base_width_dsst x scale_model_factor,即：  
+**若第一帧的图像块面积不大于max_area，那么以后提取的尺度图像块大小均与第一帧图像块的大小一样**
+
+---
+
 ## 训练
 训练分两种方式：MOSSE方式和KCF的方式，还没比较两种方法的速度，可能KCF更快，因为KCF是MOSSE后面提出的弄懂了KCF的原理提出的更新方法。
 - KCF方式将滤波器看成一个整体进行更新，即更新_alphaf，OpenTracker项目中用的均是这种方法
@@ -210,7 +202,9 @@ cap>>frame 这行代码运行时间长
 
 ---
 
-### n_scale的修改
+### n_scale与scale_step的修改
+---
+#### 速度测试  
 测试视频 201903062.MP4	h.264编码,n_sacle = 9  
 
 |主函数			|子函数					|时长(ms)	|
@@ -235,9 +229,27 @@ cap>>frame 这行代码运行时间长
 |update			|scale estimation		|5.7		|
 |update			|filter train			|6.7		|
 
+测试视频 landing19030722.MP4	h.264编码,n_sacle = 15 scale_step = 1.1  
+
+|主函数			|子函数					|时长(ms)	|
+|:-				|:-						|:-			|
+|总程序			|						|36.4	|
+|解码			|						|4			|
+|init			|						|\			|
+|update			|						|32.2		|
+|update			|tranlation estimation	|3.68		|
+|update			|scale estimation		|16.2		|
+|update			|filter train			|12.25		|
+
+
+
+#### 调参事项
+1. 最终是要找到一条很好的尺度变化曲线  
+2. 当尺度过小时，如8时，尺度结果始终是1，即没有响应，当15时开始有响应  
+3. 论文中给出的n_scale是33，scale_step是1.05  
+4. 速度是和第一帧的roi大小相关的，因为后面提取的图像块都要resize到base_scale上再提hog特征  
+
 ---
-
-
 
 
 
