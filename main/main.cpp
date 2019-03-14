@@ -11,7 +11,7 @@
 #include <opencv2/core.hpp>
 
 //#define TEST_FPS
-#define SAVE_VIDEO
+//#define SAVE_VIDEO
 
 
 using namespace cv;
