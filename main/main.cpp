@@ -10,7 +10,7 @@
 #include "kcftracker.hpp"
 #include <opencv2/core.hpp>
 
-//#define TEST_FPS
+#define TEST_FPS
 //#define SAVE_VIDEO
 
 
@@ -26,11 +26,18 @@ int main()
     cv::Mat frame;
     cv::Mat frame_gray;
     cv::Rect2d roi;
-    VideoCapture cap("/home/ubutnu/Video/s_video/201903062.MP4");
+    std::string read_path = "/home/ubutnu/Video/s_video/";
+    std::string filename;
+    std::string suffix = ".mp4";
+    std::cin>>filename;
+    std::string w_read_path = read_path+filename+suffix;
+    VideoCapture cap(w_read_path);
     int frame_count;    //number of passed frame
 
 #ifdef SAVE_VIDEO
-    VideoWriter writer("../../processed/DJI_0144P.avi",CV_FOURCC('M','J','P','G'),30,Size(1280,720));
+    std::string write_path="../processed/";
+    std::string w_write_path = write_path+filename+".avi";
+    VideoWriter writer(w_write_path,CV_FOURCC('M','J','P','G'),24,Size(1280,720));
 #endif
 
  #ifdef TEST_FPS
@@ -81,7 +88,9 @@ int main()
         time_used = (double)(dur_fps)/CLOCKS_PER_SEC;
         fps =1/time_used;
         time_used *= 1000;
+		cout<<"roi size:"<<roi.width<<"*"<<roi.height<<endl;
         cout<<"fps/time used:"<<fps<<"/"<<time_used<<"ms"<<endl;
+        cout<<"-----------new frame----------"<<endl;
 #endif
 
 

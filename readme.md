@@ -177,6 +177,25 @@ scale_response尺寸也为1*n_scale，即每个尺寸一个得分，求最高的
 
 ---
 
+### getFeature()
+位置预测特征提取  
+#### 1. 中心点
+中心点是_roi的中心点  
+```
+float cx = _roi.x + _roi.width / 2;
+float cy = _roi.y + _roi.height / 2;
+```
+
+#### 2. 特征区域大小
+**KCF中的区域大小extracted_roi没有变化过，大小均是上一帧的roi大小乘padded**   
+即
+```
+padded_w = _roi.width * padding;
+extracted_roi.width = padded_w;
+```
+
+---
+
 ## 训练
 训练分两种方式：MOSSE方式和KCF的方式，还没比较两种方法的速度，可能KCF更快，因为KCF是MOSSE后面提出的弄懂了KCF的原理提出的更新方法。
 - KCF方式将滤波器看成一个整体进行更新，即更新_alphaf，OpenTracker项目中用的均是这种方法
@@ -185,7 +204,7 @@ scale_response尺寸也为1*n_scale，即每个尺寸一个得分，求最高的
 ## 亚像素极值点检测 subpixel peak detection
 代码中的subpixelpeak()函数  
 参考博客[https://www.cnblogs.com/shine-lee/p/9419388.html](https://www.cnblogs.com/shine-lee/p/9419388.html)  
-此处使用抛物线近似  
+此处使用抛物线近似 
 <p align="center">
     <img src="equation/subpixelpeak 1.png"> 
 </p>
@@ -214,6 +233,12 @@ step2. train函数中用这一帧的特征更新_tmpl
 若不更新模板，那么跟踪算法从头到尾只使用第一帧框出来的目标特征，而本算法中提取的是HOG特征，因此若不更新模板，对旋转的情况是完全不具有适应性的。  
 结论：在本场景中，保持一个较小的interp_factor是较为简单的解决方法  
 
+## 关于参数template_size的重要性
+原理性问题未知，只说现象：   
+1. template用在getFeature函数中。在位置滤波器进行初始化init时，对所提取的extracted_roi大小进行微调，虽然extracted_roi的大小仅有几个像素的变化，但是微调后的extracted_roi在提取特征时速度非常快。这样也是因为template_size的值的选取是有讲究的，一般取2的指数。越小速度越快但是容易跟不准，越大速度越慢但效果更好。这里取了128   
+2. 第一帧初始化后，位置滤波器提取的extracted_roi大小不再变化。   
+
+
 ## 关于n_scale和scale_step的选择
 
 
@@ -234,6 +259,8 @@ step2. train函数中用这一帧的特征更新_tmpl
 |update			|scale estimation		|6.5		|
 |update			|filter train			|9.6		|
 
+
+
 ---
 
 ### n_scale与scale_step的修改
@@ -251,7 +278,7 @@ step2. train函数中用这一帧的特征更新_tmpl
 |update			|scale estimation		|1.46		|
 |update			|filter train			|4.64		|
 
-测试视频 201903062.MP4	h.264编码,n_sacle = 20  
+测试视频 201903062.MP4	h.264编码,n_sacle = 20, PC  
 
 |主函数			|子函数					|时长(ms)	|
 |:-				|:-						|:-			|
@@ -263,7 +290,7 @@ step2. train函数中用这一帧的特征更新_tmpl
 |update			|scale estimation		|5.7		|
 |update			|filter train			|6.7		|
 
-测试视频 landing19030722.MP4	h.264编码,n_sacle = 15 scale_step = 1.1  
+测试视频 landing19030722.MP4	h.264编码,n_sacle = 15 scale_step = 1.1, PC   
 
 |主函数			|子函数					|时长(ms)	|
 |:-				|:-						|:-			|
@@ -275,8 +302,6 @@ step2. train函数中用这一帧的特征更新_tmpl
 |update			|scale estimation		|16.2		|
 |update			|filter train			|12.25		|
 
-
-
 #### 调参事项
 1. 最终是要找到一条很好的尺度变化曲线  
 2. 当尺度过小时，如8时，尺度结果始终是1，即没有响应，当15时开始有响应  
@@ -285,12 +310,52 @@ step2. train函数中用这一帧的特征更新_tmpl
 
 ---
 
+### manifold test
+
+测试视频 DJI_0144.MP4	n_sacle = 15  MPED4, MANIFOLD  
+
+|主函数			|子函数					|时长(ms)	|
+|:-				|:-						|:-			|
+|总程序			|						|62			|
+|解码			|						|10			|
+|init			|						|29			|
+|update			|						|50			|
+|update			|tranlation estimation	|20			|
+|update			|scale estimation		|6			|
+|update			|filter train			|24			|
+
+
+测试视频 scale1.MP4	n_sacle = 15  h.264, MANIFOLD, init window 119*114  
+
+|主函数			|子函数					|时长(ms)	|
+|:-				|:-						|:-			|
+|总程序			|						|117		|
+|解码			|						|61			|
+|init			|						|\			|
+|update			|						|56			|
+|update			|tranlation estimation	|22			|
+|update			|scale estimation		|6			|
+|update			|filter train			|27.7		|
+
+测试视频 landing2.MP4	n_sacle = 15  h.264, MANIFOLD, init window 132*118  
+
+|主函数			|子函数					|时长(ms)	|
+|:-				|:-						|:-			|
+|总程序			|						|117		|
+|解码			|						|61			|
+|init			|						|\			|
+|update			|						|97			|
+|update			|tranlation estimation	|35			|
+|update			|scale estimation		|6			|
+|update			|filter train			|46			|
+
+
 
 ## 待拍摄（测试）的数据
 
-- 降落较快的情况
-- 较慢旋转的情况
- 
+## 目前问题
+3.18. 视频末端被跟踪物体变大后位置滤波器很容易出问题，出现漂移的问题  
+原因：位置滤波器提取特征的大小只与第一帧大小有关，以后不再变大，第一帧只有70*70像素的目标最后变成了300*300的大小，位置滤波器还是以120*120的大小在提特征
 
 
 

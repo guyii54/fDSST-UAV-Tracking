@@ -126,11 +126,11 @@ DSSTTracker::DSSTTracker(bool hog)
     }
 
      //multiscale=========
-        template_size = 128; // 64 or 96 is  a little small;
+        template_size = 96; //100;
         scale_weight = 0.95;
 
     //dsst===================
-        scale_step = 1.05;
+        scale_step = 1.01;
         n_scales = 15;
 //        _dsst = true;
         _scale_dsst = 1;
@@ -155,7 +155,6 @@ void DSSTTracker::init(const cv::Mat image, const cv::Rect2d &roi)
     _alphaf = cv::Mat(_size_patch[0], _size_patch[1], CV_32FC2, float(0));
     //_num = cv::Mat(size_patch[0], size_patch[1], CV_32FC2, float(0));
     //_den = cv::Mat(size_patch[0], size_patch[1], CV_32FC2, float(0));
-
     train(_tmpl, 1.0); // train with initial frame
 
     init_scale(image, roi);
@@ -349,8 +348,6 @@ void DSSTTracker::train(cv::Mat x, float train_interp_factor)
 
     cv::Mat k = gaussianCorrelation(x, x);
     cv::Mat alphaf = complexDotDivision(_prob, (dft_d(k) + lambda)); // KCF (17)
-    cout<<"-    -    -sizeof k:"<<k.rows<<"*"<<k.cols<<endl;
-    cout<<"-    -    -sizeof alphaf:"<<alphaf.rows<<"*"<<alphaf.cols<<endl;
 
     _tmpl = (1 - train_interp_factor) * _tmpl + (train_interp_factor)*x;
     _alphaf = (1 - train_interp_factor) * _alphaf + (train_interp_factor)*alphaf;
@@ -464,42 +461,39 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
         //**********init tmpl_sz**********
         int padded_w = _roi.width * padding;
         int padded_h = _roi.height * padding;
-        printf("padded:%d,%d",padded_w,padded_h);
-        //new codes
-//        _tmpl_sz.width = padded_w;
-//        _tmpl_sz.height = padded_h;
-//        _scale = 1;
+
+        _tmpl_sz.width = padded_w;
+        _tmpl_sz.height = padded_h;
+        _scale = 1;
         //此段原本为下面的代码，但根据最后输出，换成上面这段是一样的
         //orginal code is below but codes upon have the same result
-        if (template_size > 1)
-        {                             // Fit largest dimension to the given template size
-            if (padded_w >= padded_h) //fit to width
-                _scale = padded_w / (float)template_size;
-            else
-                _scale = padded_h / (float)template_size;
+//        if (template_size > 1)
+//        {                             // Fit largest dimension to the given template size
+//            if (padded_w >= padded_h) //fit to width
+//                _scale = padded_w / (float)template_size;
+//            else
+//                _scale = padded_h / (float)template_size;
 
-            _tmpl_sz.width = padded_w / _scale;
-            _tmpl_sz.height = padded_h / _scale;
-        }
-        else
-        { //No template size given, use ROI size
-            _tmpl_sz.width = padded_w;
-            _tmpl_sz.height = padded_h;
-            _scale = 1;
-            // original code from paper:
-            /*if (sqrt(padded_w * padded_h) >= 100) {   //Normal size
-                _tmpl_sz.width = padded_w;
-                _tmpl_sz.height = padded_h;
-                _scale = 1;
-            }
-            else {   //ROI is too big, track at half size
-                _tmpl_sz.width = padded_w / 2;
-                _tmpl_sz.height = padded_h / 2;
-                _scale = 2;
-            }*/
-        }
-
-
+//            _tmpl_sz.width = padded_w / _scale;
+//            _tmpl_sz.height = padded_h / _scale;
+//        }
+//        else
+//        { //No template size given, use ROI size
+//            _tmpl_sz.width = padded_w;
+//            _tmpl_sz.height = padded_h;
+//            _scale = 1;
+//            // original code from paper:
+//            /*if (sqrt(padded_w * padded_h) >= 100) {   //Normal size
+//                _tmpl_sz.width = padded_w;
+//                _tmpl_sz.height = padded_h;
+//                _scale = 1;
+//            }
+//            else {   //ROI is too big, track at half size
+//                _tmpl_sz.width = padded_w / 2;
+//                _tmpl_sz.height = padded_h / 2;
+//                _scale = 2;
+//            }*/
+//        }
         // Round the _tmpl_sz
         if (_hogfeatures)
         {
@@ -515,7 +509,7 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
     }
 
     // get new extracted_roi
-//    printf("c:%f,%f,%d,%d,%f,%f,%f.%f\n", scale_adjust, _scale, _tmpl_sz.width, _tmpl_sz.height,_roi.width,_roi.height, cx, cy);
+    //printf("c:%f,%f,%d,%d,%f,%f\n", scale_adjust, _scale, _tmpl_sz.width, _tmpl_sz.height, cx, cy);
     extracted_roi.width = scale_adjust * _scale * _tmpl_sz.width;                       //无论template_size是多少，extracted_roi.width的大小均是padded_w
     extracted_roi.height = scale_adjust * _scale * _tmpl_sz.height;
     extracted_roi.x = cx - extracted_roi.width / 2;
@@ -534,9 +528,10 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
     if (extracted_roi.height <= 0)
         extracted_roi.height = 2;
 
-    printf("extracted_roi:%d,%d,%d,%d\n", extracted_roi.x, extracted_roi.y, extracted_roi.width, extracted_roi.height);
+    //printf("extracted_roi:%d,%d,%d,%d\n", extracted_roi.x, extracted_roi.y, extracted_roi.width, extracted_roi.height);
     cv::Mat FeaturesMap;
     cv::Mat z = subwindow(image, extracted_roi, cv::BORDER_REPLICATE);
+
     if (z.cols != _tmpl_sz.width || z.rows != _tmpl_sz.height)
     {
         cv::resize(z, z, _tmpl_sz);
