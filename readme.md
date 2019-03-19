@@ -246,6 +246,7 @@ step3. 做相关运算，得到_tmpl_sz这个尺度上的响应最大位置坐�
 step4. 根据resize的映射关系，将res映射回原图的尺度中
 ```
 real-shift = resized-shift * cell_size * _scale_dsst
+```
 
 
 ## 关于n_scale和scale_step的选择
