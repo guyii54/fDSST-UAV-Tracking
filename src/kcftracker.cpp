@@ -108,7 +108,7 @@ DSSTTracker::DSSTTracker(bool hog)
     if (hog)
     { // HOG - KCF
         // VOT
-        interp_factor = 0.012;
+        interp_factor = 0.05;
         sigma = 0.6;
         // TPAMI
         //interp_factor = 0.02;
@@ -130,13 +130,13 @@ DSSTTracker::DSSTTracker(bool hog)
         scale_weight = 0.95;
 
     //dsst===================
-        scale_step = 1.05;
+        scale_step = 1.03;
         n_scales = 15;
 //        _dsst = true;
         _scale_dsst = 1;
         scale_padding = 1.0;
         scale_sigma_factor = 0.25;
-        scale_lr = 0.025;
+        scale_lr = 0.02;
         scale_max_area = 512;
         scale_lambda = 0.01;
 
@@ -191,6 +191,8 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
     if (_roi.height <= 0)
         _roi.height = 2;
 
+    //roi.x, roi.y: coordinate of top-left corner
+    //cx,cy: center coordinate of roi
     float cx = _roi.x + _roi.width / 2.0f;
     float cy = _roi.y + _roi.height / 2.0f;
 
@@ -450,7 +452,7 @@ cv::Mat DSSTTracker::createGaussianPeak(int sizey, int sizex)
 // Obtain sub-window from image, with replication-padding and extract features
 cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scale_adjust)
 {
-    cv::Rect extracted_roi;
+//    cv::Rect extracted_roi;
 
     //printf("_roi:%f,%f,%f,%f\n",_roi.x,_roi.y,_roi.width,_roi.height);
     // get the centor of roi
@@ -464,13 +466,13 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
         //**********init tmpl_sz**********
         int padded_w = _roi.width * padding;
         int padded_h = _roi.height * padding;
-        printf("padded:%d,%d",padded_w,padded_h);
+//        printf("padded:%d,%d",padded_w,padded_h);
         //new codes
 //        _tmpl_sz.width = padded_w;
 //        _tmpl_sz.height = padded_h;
 //        _scale = 1;
-        //此段原本为下面的代码，但根据最后输出，换成上面这段是一样的
-        //orginal code is below but codes upon have the same result
+        //此段原本为下面的代码，但根据最后输出，换成上面这段是不一样的
+        //orginal code is below， codes upon have different result
         if (template_size > 1)
         {                             // Fit largest dimension to the given template size
             if (padded_w >= padded_h) //fit to width
@@ -499,7 +501,6 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
             }*/
         }
 
-
         // Round the _tmpl_sz
         if (_hogfeatures)
         {
@@ -516,8 +517,10 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
 
     // get new extracted_roi
 //    printf("c:%f,%f,%d,%d,%f,%f,%f.%f\n", scale_adjust, _scale, _tmpl_sz.width, _tmpl_sz.height,_roi.width,_roi.height, cx, cy);
-    extracted_roi.width = scale_adjust * _scale * _tmpl_sz.width;                       //无论template_size是多少，extracted_roi.width的大小均是padded_w
-    extracted_roi.height = scale_adjust * _scale * _tmpl_sz.height;
+//    extracted_roi.width = scale_adjust * _scale * _tmpl_sz.width;                       //无论template_size是多少，extracted_roi.width的大小均是padded_w
+//    extracted_roi.height = scale_adjust * _scale * _tmpl_sz.height;
+    extracted_roi.width = scale_adjust * _scale * _tmpl_sz.width * _scale_dsst;                       //无论template_size是多少，extracted_roi.width的大小均是padded_w
+    extracted_roi.height = scale_adjust * _scale * _tmpl_sz.height*_scale_dsst;
     extracted_roi.x = cx - extracted_roi.width / 2;
     extracted_roi.y = cy - extracted_roi.height / 2;
 
@@ -541,7 +544,8 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
     {
         cv::resize(z, z, _tmpl_sz);
     }
-    //printf("%d, %d \n", z.cols, z.rows);
+
+    printf("size of z:%d, %d \n", z.cols, z.rows);
     //double timereco = (double)cv::getTickCount();
 	//float fpseco = 0;
     // HOG features
@@ -556,6 +560,7 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
         _size_patch[1] = map->sizeX;
         _size_patch[2] = map->numFeatures;
 
+        printf("sizeX and sizeY: %d*%d\n",map->sizeX,map->sizeY);
         FeaturesMap = cv::Mat(cv::Size(map->numFeatures, map->sizeX * map->sizeY), CV_32F, map->map); // Procedure do deal with cv::Mat multichannel bug
         FeaturesMap = FeaturesMap.t();                                                                // transpose
         freeFeatureMapObject(&map);
@@ -575,6 +580,9 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
         createHanningMats();
     }
     FeaturesMap = _hann.mul(FeaturesMap); //element-wise multiplication;
+
+//    printf("FeaturesMap size: %d*%d\n",FeaturesMap.rows,FeaturesMap.cols);
+
     return FeaturesMap;
 }
 

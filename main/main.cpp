@@ -30,6 +30,7 @@ int main()
     std::string filename;
     std::string suffix = ".mp4";
     std::cin>>filename;
+//    filename = "longtime1";
     std::string w_read_path = read_path+filename+suffix;
     VideoCapture cap(w_read_path);
     int frame_count;    //number of passed frame
@@ -93,7 +94,7 @@ int main()
         cout<<"-----------new frame----------"<<endl;
 #endif
 
-
+        rectangle(frame,tracker.extracted_roi,Scalar(0,0,255),2);
         rectangle(frame,roi,Scalar(255,0,0),2);
         imshow("frame",frame);
 

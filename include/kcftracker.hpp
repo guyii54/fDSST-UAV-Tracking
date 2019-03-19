@@ -134,6 +134,8 @@ public:
     float scale_lambda; // regularization
 //===========
 
+    cv::Rect extracted_roi;
+
 protected:
 //    bool update_kcf( const cv::Mat image, cv::Rect2d& roi);
 

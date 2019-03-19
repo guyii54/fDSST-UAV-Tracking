@@ -239,6 +239,15 @@ step2. train函数中用这一帧的特征更新_tmpl
 2. 第一帧初始化后，位置滤波器提取的extracted_roi大小不再变化。   
 
 
+## 关于位置滤波器的特征提取步骤
+step1. 根据上一帧的roi大小(_scale_dsst * base_taget_sz)、padding得到这一帧的特征提取区域（extracted roi），这一区域尺寸是变化的  
+step2. extracted roi resize到一个固定的尺寸（_tmpl_sz），固定统一尺寸便于做相关运算，便于更新。  
+step3. 做相关运算，得到_tmpl_sz这个尺度上的响应最大位置坐标（res）  
+step4. 根据resize的映射关系，将res映射回原图的尺度中
+```
+real-shift = resized-shift * cell_size * _scale_dsst
+
+
 ## 关于n_scale和scale_step的选择
 
 
@@ -353,16 +362,27 @@ step2. train函数中用这一帧的特征更新_tmpl
 
 ## 待拍摄（测试）的数据
 
-## 目前问题
+## 日志
 3.18. 视频末端被跟踪物体变大后位置滤波器很容易出问题，出现漂移的问题  
-原因：位置滤波器提取特征的大小只与第一帧大小有关，以后不再变大，第一帧只有70*70像素的目标最后变成了300*300的大小，位置滤波器还是以120*120的大小在提特征
+原因：位置滤波器提取特征的大小只与第一帧大小有关，以后不再变大，第一帧只有70*70像素的目标最后变成了300*300的大小，位置滤波器还是以120*120的大小在提特征  
+3.19. 继续测试视频，对3.18.的问题寻找解决方法。  
+目前的思考是，虽然特征框不再变大，但由于靶标是内嵌的，因此内部也是有HOG信息的，对于靶标这种跟踪物体来说，位置滤波器的大小不变是没有问题的，即目标变大，位置滤波器提取的特征就是内部的HOG特征。只需要稍稍增大学习率(0.012->0.1)，让模板更新稍稍变快即可。因此现在在对学习率进行调整。但是问题还没有得到解决。  
+对于舰船这种目标，可能内部特征不是很好，没有什么轮廓、纹理。  
+另一种思路是让extracted_roi大小跟着变化，但是提取尺寸的问题还没得到很好的解决  
+晚上解决了18号的问题，在阅读了原论文matlab版代码后，发现matlab代码在位置滤波器提取特征时使用的extracted_roi大小：  
+```
+patch_sz = floor(model_sz * currentScaleFactor);
+... ...
+... ...(subwindow img and get im_patch)
+im_patch = resize(im_patch, model_sz);
+```
+即先用currentScaleFactor（本代码中的_scale_dsst）乘model_sz(=base_target_sz*padding)得到本帧提取的区域大小（变化的），提取子区域后，在resize到统一的model_sz（不变的）大小，用resize后的图像提取hog特征。再用这个特征去做相关得到最后的响应，取响应最大处得到位置预测结果,再用resize的关系将resize后的最大响应坐标映射回原图中：  
+```
+_roi.x = _roi.x + res.x * cell_size * _scale_dsst;
+_roi.y = _roi.y + res.y * cell_size * _scale_dsst;		//realshift = resizedshift * cell_size * _scale_dsst
+```
 
-
-
-
-
-
-
+另外在测试DJI_0144视频的时候，尺度滤波器没有跟上尺度的变化，因此稍稍减小了scale filter的lr(0.025->0.02)，减小了scale_step(1.05->1.03)  
 
 
 
