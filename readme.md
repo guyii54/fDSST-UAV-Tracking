@@ -247,6 +247,10 @@ step4. 根据resize的映射关系，将res映射回原图的尺度中
 ```
 real-shift = resized-shift * cell_size * _scale_dsst
 ```
+<<<<<<< HEAD
+=======
+
+>>>>>>> 091d067034d25034ed05bcd75f87e016a6105822
 
 ## 关于n_scale和scale_step的选择
 
