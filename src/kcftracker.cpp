@@ -1,84 +1,4 @@
-/*
 
-Tracker based on Kernelized Correlation Filter (KCF) [1] and Circulant Structure with Kernels (CSK) [2].
-CSK is implemented by using raw gray level features, since it is a single-channel filter.
-KCF is implemented by using HOG features (the default), since it extends CSK to multiple channels.
-
-[1] J. F. Henriques, R. Caseiro, P. Martins, J. Batista,
-"High-Speed Tracking with Kernelized Correlation Filters", TPAMI 2015.
-
-[2] J. F. Henriques, R. Caseiro, P. Martins, J. Batista,
-"Exploiting the Circulant Structure of Tracking-by-detection with Kernels", ECCV 2012.
-
-Authors: Joao Faro, Christian Bailer, Joao F. Henriques
-Contacts: joaopfaro@gmail.com, Christian.Bailer@dfki.de, henriques@isr.uc.pt
-Institute of Systems and Robotics - University of Coimbra / Department Augmented Vision DFKI
-
-
-Constructor parameters, al l boolean:
-    hog: use HOG features (default), otherwise use raw pixels
-    fixed_window: fix window size (default), otherwise use ROI size (slower but more accurate)
-    multiscale: use multi-scale tracking (default; cannot be used with fixed_window = true)
-
-Default values are set for all properties of the tracker depending on the above choices.
-Their values can be customized further before calling init():
-    interp_factor: linear interpolation factor for adaptation
-    sigma: gaussian kernel bandwidth
-    lambda: regularization
-    cell_size: HOG cell size
-    padding: area surrounding the target, relative to its size
-    output_sigma_factor: bandwidth of gaussian target
-    template_size: template size in pixels, 0 to use ROI size
-    scale_step: scale step for multi-scale estimation, 1 to disable it
-    scale_weight: to downweight detection scores of other scales for added stability
-
-For speed, the value (template_size/cell_size) should be a power of 2 or a product of small prime numbers.
-
-Inputs to init():
-   image is the initial frame.
-   roi is a cv::Rect with the target positions in the initial frame
-
-Inputs to update():
-   image is the current frame.
-
-Outputs of update():
-   cv::Rect with target positions for the current frame
-
-
-By downloading, copying, installing or using the software you agree to this license.
-If you do not agree to this license, do not download, install,
-copy or use the software.
-
-
-                          License Agreement
-               For Open Source Computer Vision Library
-                       (3-clause BSD License)
-
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
-
-  * Redistributions of source code must retain the above copyright notice,
-    this list of conditions and the following disclaimer.
-
-  * Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-
-  * Neither the names of the copyright holders nor the names of the contributors
-    may be used to endorse or promote products derived from this software
-    without specific prior written permission.
-
-This software is provided by the copyright holders and contributors "as is" and
-any express or implied warranties, including, but not limited to, the implied
-warranties of merchantability and fitness for a particular purpose are disclaimed.
-In no event shall copyright holders or contributors be liable for any direct,
-indirect, incidental, special, exemplary, or consequential damages
-(including, but not limited to, procurement of substitute goods or services;
-loss of use, data, or profits; or business interruption) however caused
-and on any theory of liability, whether in contract, strict liability,
-or tort (including negligence or otherwise) arising in any way out of
-the use of this software, even if advised of the possibility of such damage.
- */
 
 #ifndef _KCFTRACKER_HEADERS
 #include "kcftracker.hpp"
@@ -108,7 +28,7 @@ DSSTTracker::DSSTTracker(bool hog)
     if (hog)
     { // HOG - KCF
         // VOT
-        interp_factor = 0.05;
+        interp_factor = 0.1;
         sigma = 0.6;
         // TPAMI
         //interp_factor = 0.02;
@@ -198,12 +118,20 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
 
     //********************translation estimation********************
 #ifdef TIMETEST
-    double s_tr,e_tr,d_tr;
+    double s_tr,e_tr,d_tr1,d_tr2;
     s_tr = clock();
 #endif
 
+	cv::Mat transFeature = getFeatures(image,0,1.0f);
 
-    cv::Point2f res = detect(_tmpl, getFeatures(image, 0, 1.0f), _peak_value);
+#ifdef TIMETEST
+    e_tr = clock();
+    d_tr1 = 1000*(double)(e_tr-s_tr)/CLOCKS_PER_SEC;
+    cout<<"-	-	-getFeaure:"<<d_tr1<<endl;
+	s_tr = clock();
+#endif
+
+    cv::Point2f res = detect(_tmpl, transFeature, _peak_value);
 
     // Adjust by cell size and _scale
     _roi.x = cx - _roi.width / 2.0f + ((float)res.x * cell_size * _scale_dsst);
@@ -223,9 +151,12 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
         _roi.height = 2;
 #ifdef  TIMETEST
     e_tr = clock();
-    d_tr = 1000*(double)(e_tr-s_tr)/CLOCKS_PER_SEC;
-    cout<<"-	tran es:"<<d_tr<<endl;
+    d_tr2 = 1000*(double)(e_tr-s_tr)/CLOCKS_PER_SEC;
+	cout<<"-	-	-detect:"<<d_tr2<<endl;
+    cout<<"-	tran es:"<<d_tr1+d_tr2<<endl;
 #endif
+
+
     //*********************scale estimation**********************
 #ifdef TIMETEST
     double s_sc,e_sc,d_sc;
@@ -351,8 +282,8 @@ void DSSTTracker::train(cv::Mat x, float train_interp_factor)
 
     cv::Mat k = gaussianCorrelation(x, x);
     cv::Mat alphaf = complexDotDivision(_prob, (dft_d(k) + lambda)); // KCF (17)
-    cout<<"-    -    -sizeof k:"<<k.rows<<"*"<<k.cols<<endl;
-    cout<<"-    -    -sizeof alphaf:"<<alphaf.rows<<"*"<<alphaf.cols<<endl;
+    //cout<<"-    -    -sizeof k:"<<k.rows<<"*"<<k.cols<<endl;
+    //cout<<"-    -    -sizeof alphaf:"<<alphaf.rows<<"*"<<alphaf.cols<<endl;
 
     _tmpl = (1 - train_interp_factor) * _tmpl + (train_interp_factor)*x;
     _alphaf = (1 - train_interp_factor) * _alphaf + (train_interp_factor)*alphaf;
@@ -537,7 +468,7 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
     if (extracted_roi.height <= 0)
         extracted_roi.height = 2;
 
-    printf("extracted_roi:%d,%d,%d,%d\n", extracted_roi.x, extracted_roi.y, extracted_roi.width, extracted_roi.height);
+//    printf("extracted_roi:%d,%d,%d,%d\n", extracted_roi.x, extracted_roi.y, extracted_roi.width, extracted_roi.height);
     cv::Mat FeaturesMap;
     cv::Mat z = subwindow(image, extracted_roi, cv::BORDER_REPLICATE);
     if (z.cols != _tmpl_sz.width || z.rows != _tmpl_sz.height)
@@ -545,7 +476,7 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
         cv::resize(z, z, _tmpl_sz);
     }
 
-    printf("size of z:%d, %d \n", z.cols, z.rows);
+//    printf("size of z:%d, %d \n", z.cols, z.rows);
     //double timereco = (double)cv::getTickCount();
 	//float fpseco = 0;
     // HOG features
@@ -560,7 +491,7 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
         _size_patch[1] = map->sizeX;
         _size_patch[2] = map->numFeatures;
 
-        printf("sizeX and sizeY: %d*%d\n",map->sizeX,map->sizeY);
+//        printf("sizeX and sizeY: %d*%d\n",map->sizeX,map->sizeY);
         FeaturesMap = cv::Mat(cv::Size(map->numFeatures, map->sizeX * map->sizeY), CV_32F, map->map); // Procedure do deal with cv::Mat multichannel bug
         FeaturesMap = FeaturesMap.t();                                                                // transpose
         freeFeatureMapObject(&map);
@@ -743,6 +674,10 @@ cv::Point2i DSSTTracker::detect_scale(cv::Mat image)
 // Compute the F^l in DSST (4);
 cv::Mat DSSTTracker::get_sample_dsst(const cv::Mat &image)
 {
+#ifdef TIMETEST
+	double st_gsd,et_gsd,dt_gsd;
+	st_gsd = clock();
+#endif
 	//double timereco = (double)cv::getTickCount();
 	//float fpseco = 0;
 
@@ -822,6 +757,12 @@ cv::Mat DSSTTracker::get_sample_dsst(const cv::Mat &image)
     }
     // Do fft to the FHOG features row by row
     samples = dft_d(samples, 0, 1);
+
+#ifdef TIMETEST
+	et_gsd = clock();
+	dt_gsd = 1000*(double)(et_gsd-st_gsd)/CLOCKS_PER_SEC;
+	printf("-	-	-	-gsd:%02f\n",dt_gsd);
+#endif
 
     return samples;
 }

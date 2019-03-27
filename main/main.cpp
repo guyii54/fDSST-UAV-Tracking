@@ -26,10 +26,16 @@ int main()
     cv::Mat frame;
     cv::Mat frame_gray;
     cv::Rect2d roi;
-    std::string read_path = "/home/ubutnu/Video/s_video/";
+//    std::string read_path = "/home/ubuntu/Videos/";
+//    std::string filename;
+//    std::string suffix = ".mp4";
+//    std::cin>>filename;
+
+    std::string read_path = "/home/ubuntu/Videos/";
     std::string filename;
-    std::string suffix = ".mp4";
-    std::cin>>filename;
+    std::string suffix = "/000%03d.jpg";
+    std::cin >> filename;
+
 //    filename = "longtime1";
     std::string w_read_path = read_path+filename+suffix;
     VideoCapture cap(w_read_path);
@@ -68,11 +74,15 @@ int main()
     tracker.init(frame,roi);
     for(frame_count = 1;;frame_count++)
     {
+
+
+		cap>>frame;
+
 #ifdef TEST_FPS
         start_fps = clock();
 #endif
 
-        cap>>frame;
+        
 
 //        cvtColor(frame,frame_gray,COLOR_RGB2GRAY,0);
         if(frame.empty() == true)
