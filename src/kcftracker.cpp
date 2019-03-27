@@ -127,7 +127,7 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
 #ifdef TIMETEST
     e_tr = clock();
     d_tr1 = 1000*(double)(e_tr-s_tr)/CLOCKS_PER_SEC;
-    cout<<"-	-	-getFeaure:"<<d_tr1<<endl;
+    cout<<"-	-       getFeaure:"<<d_tr1<<endl;
 	s_tr = clock();
 #endif
 
@@ -152,7 +152,7 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
 #ifdef  TIMETEST
     e_tr = clock();
     d_tr2 = 1000*(double)(e_tr-s_tr)/CLOCKS_PER_SEC;
-	cout<<"-	-	-detect:"<<d_tr2<<endl;
+//	cout<<"-	-	-detect:"<<d_tr2<<endl;
     cout<<"-	tran es:"<<d_tr1+d_tr2<<endl;
 #endif
 
@@ -206,18 +206,30 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
 #endif
         //********************update and train  the filter********************
 #ifdef TIMETEST
-        double s_fil,e_fil,d_filt,d_fils;
+        double s_fil,e_fil,d_filt1,d_filt2,d_fils;
         s_fil = clock();
 #endif
 
+
         assert(_roi.width >= 0 && _roi.height >= 0);
-        train(getFeatures(image, 0), interp_factor);
+        transFeature =getFeatures(image, 0);
+
+#ifdef TIMETEST
+        e_fil = clock();
+        d_filt1 = 1000*(double)(e_fil-s_fil)/CLOCKS_PER_SEC;
+        cout<<"-	-       getFeature:"<<d_filt1<<endl;
+        s_fil = clock();
+#endif
+
+
+        train(transFeature, interp_factor);
         //attention: feature here is not the same as the feature gotten during translation estimation, _roi has changed
 
 #ifdef TIMETEST
-		e_fil = clock();
-		d_filt = 1000*(double)(e_fil-s_fil)/CLOCKS_PER_SEC;
-		s_fil = clock();
+        e_fil = clock();
+        d_filt2 = 1000*(double)(e_fil-s_fil)/CLOCKS_PER_SEC;
+        cout<<"-	trans fil train:"<<d_filt1+d_filt2<<endl;
+        s_fil = clock();
 #endif
 
         train_scale(image);
@@ -225,9 +237,9 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
 #ifdef TIMETEST
         e_fil = clock();
         d_fils = 1000*(double)(e_fil-s_fil)/CLOCKS_PER_SEC;
-        cout<<"-	filter train:"<<d_filt+d_fils<<endl;
-		cout<<"-	-	trans fil train:"<<d_filt<<endl;
-		cout<<"-	-	scale fil train:"<<d_fils<<endl;
+        cout<<"-	scale fil train:"<<d_fils<<endl;
+//        cout<<"-	filter train:"<<d_filt1+d_filt2+d_fils<<endl;
+
 #endif
         roi = _roi;
 
@@ -279,14 +291,45 @@ cv::Point2f DSSTTracker::detect(cv::Mat z, cv::Mat x, float &peak_value) // KCF 
 // train tracker with a single image, to update _alphaf;
 void DSSTTracker::train(cv::Mat x, float train_interp_factor)
 {
+//#ifdef TIMETEST
+//    double s_train,e_train,d_train;
+//    s_train = clock();
+//#endif
 
+    //trans_train1
     cv::Mat k = gaussianCorrelation(x, x);
+
+//#ifdef TIMETEST
+//    e_train = clock();
+//    d_train = 1000*(double)(e_train-s_train)/CLOCKS_PER_SEC;
+//    cout<<"-        -       -       -gaussioncor:"<<d_train<<endl;
+//    s_train = clock();
+//#endif
+
+    //trans_train2
     cv::Mat alphaf = complexDotDivision(_prob, (dft_d(k) + lambda)); // KCF (17)
+
+
+//#ifdef TIMETEST
+//    e_train = clock();
+//    d_train = 1000*(double)(e_train-s_train)/CLOCKS_PER_SEC;
+//    cout<<"-      -       -       trans_train2:"<<d_train<<endl;
+//    s_train = clock();
+//#endif
+
     //cout<<"-    -    -sizeof k:"<<k.rows<<"*"<<k.cols<<endl;
     //cout<<"-    -    -sizeof alphaf:"<<alphaf.rows<<"*"<<alphaf.cols<<endl;
 
+    //trains_train3
     _tmpl = (1 - train_interp_factor) * _tmpl + (train_interp_factor)*x;
     _alphaf = (1 - train_interp_factor) * _alphaf + (train_interp_factor)*alphaf;
+
+
+//#ifdef TIMETEST
+//    e_train = clock();
+//    d_train = 1000*(double)(e_train-s_train)/CLOCKS_PER_SEC;
+//    cout<<"-      -       -       trans_train3:"<<d_train<<endl;
+//#endif
 
     /*//MOSSE-style update
     cv::Mat kf = dft_d(gaussianCorrelation(x, x));
@@ -304,6 +347,11 @@ void DSSTTracker::train(cv::Mat x, float train_interp_factor)
 // which must both be MxN. They must also be periodic (ie., pre-processed with a cosine window).
 cv::Mat DSSTTracker::gaussianCorrelation(cv::Mat x1, cv::Mat x2) // KCF (30)
 {
+
+#ifdef TIMETEST
+    double s_gau,e_gau,d_gau;
+    s_gau = clock();
+#endif
 
     cv::Mat c = cv::Mat(cv::Size(_size_patch[1], _size_patch[0]), CV_32F, cv::Scalar(0));
     // HOG features
@@ -338,6 +386,15 @@ cv::Mat DSSTTracker::gaussianCorrelation(cv::Mat x1, cv::Mat x2) // KCF (30)
 
     cv::Mat k;
     cv::exp((-d / (sigma * sigma)), k);
+
+#ifdef TIMETEST
+    e_gau = clock();
+    d_gau = 1000*(double)(e_gau-s_gau)/CLOCKS_PER_SEC;
+    cout<<"-       -       gaussioncor:"<<d_gau<<endl;
+#endif
+
+
+
     return k;
 }
 
@@ -469,6 +526,7 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
         extracted_roi.height = 2;
 
 //    printf("extracted_roi:%d,%d,%d,%d\n", extracted_roi.x, extracted_roi.y, extracted_roi.width, extracted_roi.height);
+    cout<<"extracted_roi size:"<<extracted_roi.width<<"*"<<extracted_roi.height<<endl;
     cv::Mat FeaturesMap;
     cv::Mat z = subwindow(image, extracted_roi, cv::BORDER_REPLICATE);
     if (z.cols != _tmpl_sz.width || z.rows != _tmpl_sz.height)
@@ -761,7 +819,7 @@ cv::Mat DSSTTracker::get_sample_dsst(const cv::Mat &image)
 #ifdef TIMETEST
 	et_gsd = clock();
 	dt_gsd = 1000*(double)(et_gsd-st_gsd)/CLOCKS_PER_SEC;
-	printf("-	-	-	-gsd:%02f\n",dt_gsd);
+        printf("-	-	gsd:%02f\n",dt_gsd);
 #endif
 
     return samples;

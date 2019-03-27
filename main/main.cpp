@@ -24,17 +24,17 @@ int main()
     double fps;
     double time_used;
     cv::Mat frame;
-    cv::Mat frame_gray;
+//    cv::Mat frame_gray;
     cv::Rect2d roi;
+    std::string read_path = "/home/nvidia/Videos/s_video/";
+    std::string filename;
+    std::string suffix = ".mp4";
+    std::cin>>filename;
+
 //    std::string read_path = "/home/ubuntu/Videos/";
 //    std::string filename;
-//    std::string suffix = ".mp4";
-//    std::cin>>filename;
-
-    std::string read_path = "/home/ubuntu/Videos/";
-    std::string filename;
-    std::string suffix = "/000%03d.jpg";
-    std::cin >> filename;
+//    std::string suffix = "/000%03d.jpg";
+//    std::cin >> filename;
 
 //    filename = "longtime1";
     std::string w_read_path = read_path+filename+suffix;
@@ -104,7 +104,7 @@ int main()
         cout<<"-----------new frame----------"<<endl;
 #endif
 
-        rectangle(frame,tracker.extracted_roi,Scalar(0,0,255),2);
+//        rectangle(frame,tracker.extracted_roi,Scalar(0,0,255),2);
         rectangle(frame,roi,Scalar(255,0,0),2);
         imshow("frame",frame);
 

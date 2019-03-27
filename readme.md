@@ -396,11 +396,29 @@ _roi.y = _roi.y + res.y * cell_size * _scale_dsst;		//realshift = resizedshift *
 3.25.  
 讨论了毕业设计要做的工作  
 1.近处跟踪靶标的软件已基本完成，对尺度、位移适应性较强  
-2.需要完成的新功能，在远处识别到舰船后，用视觉跟踪舰船，这一部分就需要对旋转亦有适应性，因此需要使用新的算法，对于新算法的速度问题，解决方法有二：使用GPU；硬件平台使用TX2或manifold2
+2.需要完成的新功能，在远处识别到舰船后，用视觉跟踪舰船，这一部分就需要对旋转亦有适应性，因此需要使用新的算法，对于新算法的速度问题，解决方法有二：使用GPU；硬件平台使用TX2或manifold2  
 
+3.27.  
+调研了目前的目标跟踪算法对于旋转的适应性  
+旋转的适应性分为两种：非平面的旋转（out-of-plain rotation）和平面内的旋转  
+- 平面内的旋转，目前有些方法可以解决，ECO算法可以解决，另一种叫LDES(AAAI 2019)的算法也可以同时尺度和平面内旋转的问题，它将图像放在对数极坐标(log-polar)，在极坐标中尺度和旋转就变成了普通的位移，这种在对数极坐标中的方法亦称为傅立叶梅林方法  
+- 平面外的旋转，目前ECO称对平面外的旋转具有适应性，但论文中给出的例子也不是很理想  
 
+在TX2上对目前的fDSST程序进行了测试，速度并没有明显的提升，随后对程序的各个部分进行了详细的测试  
+目前耗时较长的几个模块：  
+1. getFeature();
+	大小为247*232的图像块，耗时14ms
+2. get_sample_dsst();
+	大小为247*232的图像块，耗时17ms
+3. gaussianCorrelation();
+	大小为196*185的图像块，耗时8ms  
 
-
+归结起来（主耗时程序）：  
+translation estimation = getFeature()+detect()  
+detect() = gaussioncorrelation()  
+scale estimation = get_sample_dsst()  
+translation train = getFeature()+gaussioncorrelation()  
+scale estimation = get_sample_dsst()  
 
 
 
