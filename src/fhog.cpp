@@ -80,16 +80,16 @@ namespace dsst
 */
 int getFeatureMaps(const IplImage* image, const int k, CvLSVMFeatureMapCaskade **map)
 {
-    int sizeX, sizeY;
+    int sizeX, sizeY;			//图像块中横向、纵向的cell数
     int p, px, stringSize;
-    int height, width, numChannels;
+    int height, width, numChannels;	//待处理图像块的高度、宽度、通道数（rgb就是3）
     int i, j, kk, c, ii, jj, d;
     float  * datadx, * datady;
     
     int   ch; 
     float magnitude, x, y, tx, ty;
     
-    IplImage * dx, * dy;
+    IplImage * dx, * dy;		//size和待处理图像块一样
     int *nearest;
     float *w, a_x, b_x;
 
@@ -115,13 +115,14 @@ int getFeatureMaps(const IplImage* image, const int k, CvLSVMFeatureMapCaskade *
     dy    = cvCreateImage(cvSize(image->width, image->height), 
                           IPL_DEPTH_32F, 3);
 
-    sizeX = width  / k;
+    sizeX = width  / k;		//k:cell size
     sizeY = height / k;
-    px    = 3 * NUM_SECTOR; 
-    p     = px;
+    px    = 3 * NUM_SECTOR;	//NUM_SECTOR(nbins = 9) 
+    p     = px;			//27
     stringSize = sizeX * p;
     allocFeatureMapObject(map, sizeX, sizeY, p);
 
+//     void cvFilter2D(const CvArr *src,CvArr *dst, const CvMat* kernel,CvPoint anchor = cvPoint(-1,-1))	
     cvFilter2D(image, dx, &kernel_dx, cvPoint(-1, 0));
     cvFilter2D(image, dy, &kernel_dy, cvPoint(0, -1));
     
@@ -138,8 +139,8 @@ int getFeatureMaps(const IplImage* image, const int k, CvLSVMFeatureMapCaskade *
 
     for(j = 1; j < height - 1; j++)
     {
-        datadx = (float*)(dx->imageData + dx->widthStep * j);
-        datady = (float*)(dy->imageData + dy->widthStep * j);
+        datadx = (float*)(dx->imageData + dx->widthStep * j);//指向dx的第j行像素值
+        datady = (float*)(dy->imageData + dy->widthStep * j);//指向dy的第j行像素值
         for(i = 1; i < width - 1; i++)
         {
             c = 0;

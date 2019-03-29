@@ -538,6 +538,11 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
     //double timereco = (double)cv::getTickCount();
 	//float fpseco = 0;
     // HOG features
+    
+// #ifdef TIMETEST
+//     double s_hog,e_hog,d_hog;
+//     s_hog = clock();
+// #endif
     if (_hogfeatures)
     {
         IplImage z_ipl = z;
@@ -562,6 +567,11 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
         _size_patch[1] = z.cols;
         _size_patch[2] = 1;
     }
+// #ifdef TIMETEST
+//     e_hog = clock();
+//     d_hog = 1000*(double)(e_hog-s_hog)/CLOCKS_PER_SEC;
+//     cout<<"-	-       getHOG:"<<d_hog<<endl;
+// #endif
 	//fpseco = ((double)cv::getTickCount() - timereco) / cv::getTickFrequency();
 	//printf("kcf hog extra time: %f \n", fpseco);
     if (inithann)

@@ -47,14 +47,14 @@ int main()
     VideoWriter writer(w_write_path,CV_FOURCC('M','J','P','G'),24,Size(1280,720));
 #endif
 
- #ifdef TEST_FPS
+#ifdef TEST_FPS
     double start_fps,end_fps,dur_fps;
 #endif
 
 
 
     //*****************declare tracker****************//
-    bool hog=true;
+    bool hog=false;
     DSSTTracker tracker(hog);
 
     //****************initialize tracker*****************//
