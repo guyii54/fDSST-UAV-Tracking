@@ -219,6 +219,74 @@ extracted_roi.width = padded_w;
 ## 公式推导
 为毕业设计成文方便，见公式推导.docx
 
+
+## 关于HOG特征提取部分代码的阅读
+该部分共三个函数（fhog.cpp）：
+1. getFeatureMaps();  
+2. normalizeAndTruncate();  
+3. PCAFeatureMaps();  
+
+---
+
+### getFeatureMaps()函数
+变量表：  
+|变量名				|变量含义							|
+|：-					|：-									|
+|k(cell_size)		|cell size							|
+|sizeX				|待提取图横向有多少个cell				|
+|sizeY				|待提取图纵向有多少个cell				|
+|width				|待提取图的宽						|
+|height				|待提取图的高						|
+|numChannels		|待提取图的通道数					|
+|NUM_SECTOR			|nbins 方向数						|
+|map				|提取出的特征谱						|
+|kernel_dx			|水平方向微分核						|
+|kernel_dy			|垂直方向微分核						|
+|arg_vector			|离散的方向角  i*pi/nbins			|
+|boundary x			|cos(arg_vector)					|
+|boundary y			|sin(arg_vector)					|
+|dx					|横向的梯度结果 size:width*height*numChannels	|
+|dy					|纵向的梯度结果						|
+|datadx				|指向图第j行的微分值地址的指针		|
+|x,y				|第i行，第j列，第c通道的横纵向梯度值	|
+|r					|存梯度最大的通道的梯度绝对值 size:width*height	|  
+
+函数步骤：  
+step1 声明变量、存储空间
+声明以上变量，声明map的存储空间  
+
+step2 滑动核求梯度
+使用filter2D函数求得横纵向梯度dx,dy  
+
+step3 计算梯度绝对值
+计算三个通道的梯度值  
+```
+r = squar(x*x+y*y);  
+```
+取最大的梯度最大的存到r中  
+
+step4 计算梯度方向  
+用离散化的方向角计算  
+```
+dotProd = boundary_x[i]*x+boundary_y[i]*y;
+```
+取最大的arg_vector[i]为方向角  
+
+step5 赋值给map  
+
+
+---
+
+### allocFeatureMapObject（）函数
+声明特征谱(map)的空间，并将map全部赋值为0   
+函数原型 int allocFeatureMapObject(CvLSVMFeatureMapCaskade **obj, const int sizeX, 
+                          const int sizeY, const int numFeatures)  
+obj：结构体的名字
+sizeX、sizeY、numFeatures:要声明的obj的参数
+ 
+---
+
+
 ## 关于编码格式
 编码格式会影响opencv的解码速度，进而影响程序的整体运行速度  
 cap>>frame 这行代码运行时间长  
@@ -247,10 +315,7 @@ step4. 根据resize的映射关系，将res映射回原图的尺度中
 ```
 real-shift = resized-shift * cell_size * _scale_dsst
 ```
-<<<<<<< HEAD
-=======
 
->>>>>>> 091d067034d25034ed05bcd75f87e016a6105822
 
 ## 关于n_scale和scale_step的选择
 
@@ -396,16 +461,41 @@ _roi.y = _roi.y + res.y * cell_size * _scale_dsst;		//realshift = resizedshift *
 3.25.  
 讨论了毕业设计要做的工作  
 1.近处跟踪靶标的软件已基本完成，对尺度、位移适应性较强  
-2.需要完成的新功能，在远处识别到舰船后，用视觉跟踪舰船，这一部分就需要对旋转亦有适应性，因此需要使用新的算法，对于新算法的速度问题，解决方法有二：使用GPU；硬件平台使用TX2或manifold2
+2.需要完成的新功能，在远处识别到舰船后，用视觉跟踪舰船，这一部分就需要对旋转亦有适应性，因此需要使用新的算法，对于新算法的速度问题，解决方法有二：使用GPU；硬件平台使用TX2或manifold2  
+
+3.27.  
+调研了目前的目标跟踪算法对于旋转的适应性  
+旋转的适应性分为两种：非平面的旋转（out-of-plain rotation）和平面内的旋转  
+- 平面内的旋转，目前有些方法可以解决，ECO算法可以解决，另一种叫LDES(AAAI 2019)的算法也可以同时尺度和平面内旋转的问题，它将图像放在对数极坐标(log-polar)，在极坐标中尺度和旋转就变成了普通的位移，这种在对数极坐标中的方法亦称为傅立叶梅林方法  
+- 平面外的旋转，目前ECO称对平面外的旋转具有适应性，但论文中给出的例子也不是很理想  
+
+在TX2上对目前的fDSST程序进行了测试，速度并没有明显的提升，随后对程序的各个部分进行了详细的测试  
+目前耗时较长的几个模块：  
+1. getFeature();
+	大小为247*232的图像块，耗时14ms
+2. get_sample_dsst();
+	大小为247*232的图像块，耗时17ms
+3. gaussianCorrelation();
+	大小为196*185的图像块，耗时8ms  
+
+归结起来（主耗时程序）：  
+translation estimation = getFeature()+detect()  
+detect() = gaussioncorrelation()  
+scale estimation = get_sample_dsst()  
+translation train = getFeature()+gaussioncorrelation()  
+scale estimation = get_sample_dsst()  
 
 
 
+3.28.  
+打算用gpu加速hog特征的提取  
+阅读了fDSST中HOG特征的提取过程  
+阅读了opencv sample中HOG特征提取的例程  
+还没有依照例程实现gpu提取HOG特征  
 
 
-
-
-
-
+3.29.  
+使用opencv中封装好的HOG特征提取的函数，报错，没有运行成功，返回学习cuda编程基础，想看懂代码
 
 
 

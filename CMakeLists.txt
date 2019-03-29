@@ -9,8 +9,8 @@ set( CMAKE_CXX_FLAGS "-std=c++11 -O3 -DUSE_MULTI_THREAD -pthread" )
 # Find OpenCV, you may need to set OpenCV_DIR variable
 # to the absolute path to the directory containing OpenCVConfig.cmake file
 # via the command line or GUI
-set(OpenCV_DIR /usr/local/opencv340/share/OpenCV)
-find_package(OpenCV 3.4 REQUIRED)
+set(OpenCV_DIR /usr//share/OpenCV)
+find_package(OpenCV 3.3.1 REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 #head file path
