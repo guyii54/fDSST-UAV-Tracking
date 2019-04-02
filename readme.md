@@ -495,12 +495,54 @@ scale estimation = get_sample_dsst()
 
 
 3.29.  
-使用opencv中封装好的HOG特征提取的函数，报错，没有运行成功，返回学习cuda编程基础，想看懂代码
+使用opencv中封装好的HOG特征提取的函数，报错，没有运行成功，返回学习cuda编程基础，想看懂代码  
 
 
+4.2.  
+无GPU，有了效果较好的一版  
+```
+	detect_thresh_kcf = 0.13;
+    detect_thresh_dsst = 0.15;
+    lambda = 0.0001;
+    padding = 1.5;
+    output_sigma_factor = 0.125; //0.1
 
+    if (hog)
+    { // HOG - KCF
+        // VOT
+        interp_factor = 0.1;
+        sigma = 0.6;
+        // TPAMI
+        //interp_factor = 0.02;
+        //sigma = 0.5;
+        cell_size = 4; //hog cell size = 4;
+        _hogfeatures = true;
+    }
+    else
+    { // RAW - CSK
+//        interp_factor = 0.075;
+        interp_factor = 0.01;
+        sigma = 0.2;
+        cell_size = 1; //just pixel;
+        _hogfeatures = false;
+    }
 
+     //multiscale=========
+        template_size = 128; // 64 or 96 is  a little small;
+        scale_weight = 0.95;
 
+    //dsst===================
+        scale_step = 1.03;
+        n_scales = 15;
+//        _dsst = true;
+        _scale_dsst = 1;
+        scale_padding = 1.0;
+        scale_sigma_factor = 0.25;
+        scale_lr = 0.02;
+        scale_max_area = 512;
+        scale_lambda = 0.01;
+
+```
 
 
 

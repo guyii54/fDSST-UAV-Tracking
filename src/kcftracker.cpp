@@ -168,7 +168,7 @@ bool DSSTTracker::update(const cv::Mat image, cv::Rect2d &roi)
     cout<<"scale result:"<<scaleFactors[scale_pi.x]<<endl;
 //    cout<<"scale result:"<<scaleFactors<<endl;
 #endif
-    //printf("dsst thresh: %f, peak: %f\n", detect_thresh_dsst, _peak_value);
+    printf("dsst thresh: %f, peak: %f\n", detect_thresh_dsst, _peak_value);
     if (_peak_value >= detect_thresh_dsst)
     {
         _scale_dsst = _scale_dsst * scaleFactors[scale_pi.x];
@@ -268,6 +268,7 @@ cv::Point2f DSSTTracker::detect(cv::Mat z, cv::Mat x, float &peak_value) // KCF 
     double pv;
     cv::minMaxLoc(res, NULL, &pv, NULL, &pi);   //&pv: max value, &pi: max location
     peak_value = (float)pv;
+    trans_peak = peak_value;
 
     //subpixel peak estimation, coordinates will be non-integer
     cv::Point2f p((float)pi.x, (float)pi.y);
@@ -526,7 +527,7 @@ cv::Mat DSSTTracker::getFeatures(const cv::Mat &image, bool inithann, float scal
         extracted_roi.height = 2;
 
 //    printf("extracted_roi:%d,%d,%d,%d\n", extracted_roi.x, extracted_roi.y, extracted_roi.width, extracted_roi.height);
-    cout<<"extracted_roi size:"<<extracted_roi.width<<"*"<<extracted_roi.height<<endl;
+//     cout<<"extracted_roi size:"<<extracted_roi.width<<"*"<<extracted_roi.height<<endl;
     cv::Mat FeaturesMap;
     cv::Mat z = subwindow(image, extracted_roi, cv::BORDER_REPLICATE);
     if (z.cols != _tmpl_sz.width || z.rows != _tmpl_sz.height)
@@ -735,7 +736,8 @@ cv::Point2i DSSTTracker::detect_scale(cv::Mat image)
     cv::Point2i pi; //max location
     double pv;      //max value
     cv::minMaxLoc(scale_response, NULL, &pv, NULL, &pi);
-
+    scale_peak = pv;
+    
     return pi;
 }
 

@@ -134,6 +134,9 @@ public:
     float scale_lambda; // regularization
 //===========
 
+    float trans_peak;
+    float scale_peak;
+
     cv::Rect extracted_roi;
 
 protected:
@@ -188,6 +191,8 @@ protected:
     cv::Mat _labCentroids;
 
     cv::Rect_<float> _roi;
+    
+    
 
 private:
     int _size_patch[3];//0:rows;1:cols;2:numFeatures; init in getFeatures();
@@ -197,6 +202,7 @@ private:
     int _gaussian_size;
     bool _hogfeatures;
     bool _labfeatures;
+    
     float _peak_value;
 
 //=====dsst====
