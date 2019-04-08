@@ -11,7 +11,7 @@
 #include <opencv2/core.hpp>
 
 #define TEST_FPS
-#define SAVE_VIDEO
+//#define SAVE_VIDEO
 #define PUTTEXT
 
 
@@ -40,15 +40,15 @@ int main()
     char roiheight[10];
 #endif
 
-//    std::string read_path = "/home/nvidia/Videos/s_video/";
-//    std::string filename;
-//    std::string suffix = ".mp4";
-//    std::cin>>filename;
+   std::string read_path = "/home/nvidia/Videos/s_video/";
+   std::string filename;
+   std::string suffix = ".MP4";
+   std::cin>>filename;
 
-    std::string read_path = "/home/nvidia/Videos/s_video/";
-    std::string filename;
-    std::string suffix = "/1(%d).jpg";
-    std::cin >> filename;
+//     std::string read_path = "/home/nvidia/Videos/s_video/";
+//     std::string filename;
+//     std::string suffix = "/1(%d).jpg";
+//     std::cin >> filename;
 
 //    filename = "longtime1";
     std::string w_read_path = read_path+filename+suffix;
