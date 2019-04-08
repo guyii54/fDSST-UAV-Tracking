@@ -320,6 +320,24 @@ real-shift = resized-shift * cell_size * _scale_dsst
 ## 关于n_scale和scale_step的选择
 
 
+## TLD算法
+各部分任务：  
+tracker: 针对目标的运动进行预测（利用帧间关系）  
+detector: 将每一帧视为独立的进行全图的检测，会存储目前未知所有的正负模板样本  
+learning: 观察tracker和detector，预测检测器的错误，产生样本去避免这些错误  
+
+detector:  
+全图检测方法：用窗口滑动滑出约50k个图像块，用cascaded方法逐步筛选出有目标的图像块  
+cascad方法：分成多个stage，一个stage是一个阈值条件，剔除一部分没有目标的图像块  
+stage1 Patch variance  
+灰度变化低于50的留下，其余的剔除，也叫variance filter  
+stage2 Ensemble clssifier  
+n个滤波器，每个滤波器产生一个code，对目标进行评价  
+stage3 Nearest neighbor classifier  
+
+## STAPLE算法
+staple算法在DSST基础上加入了CN这一新的特征，即利用了颜色信息，分为template和histogram两个评价体系来预测位置，这个方法对于形变物体具有较好的适应性  
+
 
 ## 测试结果
 ---
@@ -556,7 +574,14 @@ scale estimation = get_sample_dsst()
 - 会车、会船：若跟踪框内背景较少，可适应，若跟踪框内包括了其他船，无法适应(boat5,car3)  
 - 遮挡：不具有适应性(car4)  
 
+4.4.  
+使用opencv cuda库提取hog特征：  
+出现以下问题：  
+1.目标图片过小时，程序报错  
+2.hog特征如何转化成程序中可用的特征图（feature map）未知  
 
+4.6.  
+TLD论文  
 
 
 
