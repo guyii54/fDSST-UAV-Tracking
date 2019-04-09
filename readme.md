@@ -317,18 +317,7 @@ real-shift = resized-shift * cell_size * _scale_dsst
 ```
 
 
-
-## opencv中格式对应的数值
-
-|	   |   C1	|C2		|C3		|C4|
-|:-		|:-		|:-		|:-		|:-|
-|CV_8U |	0	|8		|16		|24|
-|CV_8S |	1	|9		|17		|25|
-|CV_16U|	2	|10		|18		|26|
-|CV_16S|	3	|11		|19		|27|
-|CV_32S|	4	|12		|20		|28|
-|CV_32F|	5	|13		|21		|29|
-|CV_64F|	6	|14		|22		|30|
+## 关于n_scale和scale_step的选择
 
 
 ## TLD算法
@@ -458,6 +447,7 @@ staple算法在DSST基础上加入了CN这一新的特征，即利用了颜色�
 
 
 
+## 待拍摄（测试）的数据
 
 ## 日志
 3.18.    
@@ -584,29 +574,21 @@ scale estimation = get_sample_dsst()
 - 会车、会船：若跟踪框内背景较少，可适应，若跟踪框内包括了其他船，无法适应(boat5,car3)  
 - 遮挡：不具有适应性(car4)  
 
-
 4.4.  
 使用opencv cuda库提取hog特征：  
 出现以下问题：  
 1.目标图片过小时，程序报错  
 2.hog特征如何转化成程序中可用的特征图（feature map）未知  
-=======
-4.3.  
-查询GPU硬件信息的命令   
-```
-cd /usr/local/cuda/sample/1_Utilties/deviceQuery/
-sudo make
-./deviceQuery
-```
-TX2输出：  
-Maximum number of threads per multiprocessor:  2048  
-Maximum number of threads per block:           1024  
-
+feature map使用的fhog特征，一方面size较小，另一方面提取较快
 
 4.6.  
 TLD论文  
 STAPLE论文  
+SSE及NEON：SSE是英特尔开发的单指令多数据流指令集（SIMD），类似于并行处理的原理让它可以对一些算法进行加速，neon和sse类似，是属于ARM Cortex A系列的扩展结构。
 
-
-
-
+4.7，  
+找到了staple的代码，运行测试后发现比只用DSST效果好很多：
+- 能基本解决非平面旋转的问题
+- 能解决短时间遮挡的问题
+- 适用neon加速提取fhog特征，720P速度在20帧左右
+- 尺度部分偶尔会逐渐放大，需要debug
